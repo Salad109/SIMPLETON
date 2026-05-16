@@ -7,17 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
 public class ScanLogService {
 
     private final ScanLogRepository scanLogRepository;
+    private final Clock clock;
 
-    public ScanLogService(ScanLogRepository scanLogRepository) {
+    public ScanLogService(ScanLogRepository scanLogRepository, Clock clock) {
         this.scanLogRepository = scanLogRepository;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -30,7 +32,7 @@ public class ScanLogService {
         scanLogRepository.save(new ScanLog(
                 null,
                 startedAt,
-                OffsetDateTime.now(ZoneOffset.UTC),
+                OffsetDateTime.now(clock),
                 durationMs,
                 satellitesScanned,
                 conjunctionsDetected

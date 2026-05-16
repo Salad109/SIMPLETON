@@ -18,9 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,7 @@ public class ConjunctionService {
     private final CollisionProbabilityService collisionProbabilityService;
     private final ScanLogService scanLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final Clock clock;
 
     @Value("${conjunction.tolerance-km:72.0}")
     private double toleranceKm;
@@ -65,7 +66,8 @@ public class ConjunctionService {
                               ScanService scanService,
                               CollisionProbabilityService collisionProbabilityService,
                               ScanLogService scanLogService,
-                              ApplicationEventPublisher eventPublisher) {
+                              ApplicationEventPublisher eventPublisher,
+                              Clock clock) {
         this.satelliteService = satelliteService;
         this.conjunctionRepository = conjunctionRepository;
         this.propagationService = propagationService;
@@ -73,6 +75,7 @@ public class ConjunctionService {
         this.collisionProbabilityService = collisionProbabilityService;
         this.scanLogService = scanLogService;
         this.eventPublisher = eventPublisher;
+        this.clock = clock;
     }
 
     @PostConstruct
@@ -122,7 +125,7 @@ public class ConjunctionService {
         StopWatch stopWatch = StopWatch.createStarted();
         log.info("Starting conjunction screening...");
 
-        OffsetDateTime startedAt = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime startedAt = OffsetDateTime.now(clock);
 
         // Load satellites
         List<SatelliteScanInfo> satellites = satelliteService.getAllScanInfo();

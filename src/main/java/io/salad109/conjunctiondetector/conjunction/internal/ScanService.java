@@ -62,6 +62,8 @@ public class ScanService {
      * Two detections belong to the same event if they're within 3 steps of each other.
      */
     public List<CoarseDetection> groupAndReduce(List<CoarseDetection> detections) {
+        if (detections.isEmpty()) return List.of();
+
         List<CoarseDetection> sorted = detections.parallelStream()
                 .sorted(Comparator
                         .comparingInt((CoarseDetection d) -> d.pair().a().noradCatId())

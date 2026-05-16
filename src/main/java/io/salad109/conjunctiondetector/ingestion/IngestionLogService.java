@@ -7,17 +7,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
 public class IngestionLogService {
 
     private final IngestionLogRepository ingestionLogRepository;
+    private final Clock clock;
 
-    public IngestionLogService(IngestionLogRepository ingestionLogRepository) {
+    public IngestionLogService(IngestionLogRepository ingestionLogRepository, Clock clock) {
         this.ingestionLogRepository = ingestionLogRepository;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -33,7 +35,7 @@ public class IngestionLogService {
         ingestionLogRepository.save(new IngestionLog(
                 null,
                 syncResult.startedAt(),
-                OffsetDateTime.now(ZoneOffset.UTC),
+                OffsetDateTime.now(clock),
                 syncResult.objectsInserted(),
                 syncResult.objectsUpdated(),
                 syncResult.objectsUnchanged(),

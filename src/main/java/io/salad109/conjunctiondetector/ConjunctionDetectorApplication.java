@@ -8,10 +8,12 @@ import org.orekit.data.DirectoryCrawler;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.io.File;
+import java.time.Clock;
 
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
@@ -23,6 +25,11 @@ public class ConjunctionDetectorApplication {
 
     static void main(String[] args) {
         SpringApplication.run(ConjunctionDetectorApplication.class, args);
+    }
+
+    @Bean
+    public Clock clock() {
+        return Clock.systemUTC();
     }
 
     @PostConstruct

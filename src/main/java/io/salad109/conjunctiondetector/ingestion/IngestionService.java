@@ -13,8 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,15 +29,18 @@ public class IngestionService {
     private final SatelliteService satelliteService;
     private final IngestionLogService ingestionLogService;
     private final ApplicationEventPublisher eventPublisher;
+    private final Clock clock;
 
     public IngestionService(SpaceTrackClient spaceTrackClient,
                             SatelliteService satelliteService,
                             IngestionLogService ingestionLogService,
-                            ApplicationEventPublisher eventPublisher) {
+                            ApplicationEventPublisher eventPublisher,
+                            Clock clock) {
         this.spaceTrackClient = spaceTrackClient;
         this.satelliteService = satelliteService;
         this.ingestionLogService = ingestionLogService;
         this.eventPublisher = eventPublisher;
+        this.clock = clock;
     }
 
     /**
@@ -46,7 +50,7 @@ public class IngestionService {
     public void sync() {
         log.info("Starting catalog sync...");
         StopWatch stopWatch = StopWatch.createStarted();
-        OffsetDateTime startedAt = OffsetDateTime.now(ZoneOffset.UTC);
+        OffsetDateTime startedAt = OffsetDateTime.now(clock);
 
         try {
             List<OmmRecord> records = spaceTrackClient.fetchCatalog();
@@ -85,8 +89,9 @@ public class IngestionService {
         log.debug("Processing {} records...", records.size());
 
         // Filter to valid records only
+        LocalDateTime epochCutoff = LocalDateTime.now(clock).minusDays(30);
         List<OmmRecord> validRecords = records.stream()
-                .filter(OmmRecord::isValid)
+                .filter(r -> r.isValid(epochCutoff))
                 .toList();
 
         int skipped = records.size() - validRecords.size();

@@ -1,4 +1,4 @@
-package io.salad109.conjunctiondetector.conjunction.internal;
+package io.salad109.conjunctiondetector.conjunction;
 
 import java.time.OffsetDateTime;
 
