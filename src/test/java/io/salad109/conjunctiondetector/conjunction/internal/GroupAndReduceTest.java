@@ -104,8 +104,5 @@ class GroupAndReduceTest {
         List<CoarseDetection> fromShuffled = scanService.groupAndReduce(shuffled);
 
         assertThat(fromShuffled).isEqualTo(fromOrdered);
-        for (int i = 0; i < fromOrdered.size(); i++) {
-            assertThat(fromShuffled.get(i)).isEqualTo(fromOrdered.get(i));
-        }
     }
 }

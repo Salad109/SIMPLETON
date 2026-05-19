@@ -52,9 +52,9 @@ class SpatialGridTest {
         SpatialGrid grid = new SpatialGrid(10.0, x, y, z, 0);
         List<int[]> pairs = collectPairs(grid);
 
-        long uniqueCount = pairs.stream().distinct().count();
-
-        assertThat(pairs.size()).isEqualTo(uniqueCount);
+        assertThat(pairs)
+                .extracting(p -> List.of(Math.min(p[0], p[1]), Math.max(p[0], p[1])))
+                .doesNotHaveDuplicates();
     }
 
     @Test

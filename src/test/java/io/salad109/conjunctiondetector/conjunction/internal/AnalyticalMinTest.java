@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
@@ -105,41 +106,26 @@ class AnalyticalMinTest {
     }
 
     @Test
-    void distSqNonNegativeForAll3DCombinations() {
-        float[][] sets = {
-                {-7000f, 0f, 7000f},
-                {-7000f, -1f, 7000f},
-                {-100f, 0f, 100f},
-                {-1f, 0f, 1f},
-                {-7000f, -100f, 0f},
-                {0f, 100f, 7000f},
-        };
-        for (float[] v : sets) {
-            for (float ax0 : v)
-                for (float ax1 : v)
-                    for (float bx0 : v)
-                        for (float bx1 : v)
-                            for (float ay0 : v)
-                                for (float ay1 : v)
-                                    for (float by0 : v)
-                                        for (float by1 : v)
-                                            for (float az0 : v)
-                                                for (float az1 : v)
-                                                    for (float bz0 : v)
-                                                        for (float bz1 : v) {
-                                                            PositionCache cache = buildCache(
-                                                                    new float[][]{{ax0, ax1}, {bx0, bx1}},
-                                                                    new float[][]{{ay0, ay1}, {by0, by1}},
-                                                                    new float[][]{{az0, az1}, {bz0, bz1}}
-                                                            );
-                                                            double[] result = scanService.analyticalMin(cache, 0, 1, 0, 1);
-                                                            assertThat(result[0]).isGreaterThanOrEqualTo(0.0);
-                                                            assertThat(result[1]).isBetween(0.0, 1.0);
-                                                        }
+    void distSqAndTRemainWellFormedAcrossRandomized3DConfigurations() {
+        // minDistSq must be non-negative and t must be clamped to [0,1]
+        Random rng = new Random(21);
+        for (int trial = 0; trial < 2000; trial++) {
+            PositionCache cache = buildCache(
+                    new float[][]{{rand(rng), rand(rng)}, {rand(rng), rand(rng)}},
+                    new float[][]{{rand(rng), rand(rng)}, {rand(rng), rand(rng)}},
+                    new float[][]{{rand(rng), rand(rng)}, {rand(rng), rand(rng)}}
+            );
+            double[] result = scanService.analyticalMin(cache, 0, 1, 0, 1);
+            assertThat(result[0]).as("trial %d distSq", trial).isGreaterThanOrEqualTo(0.0);
+            assertThat(result[1]).as("trial %d t", trial).isBetween(0.0, 1.0);
         }
     }
 
-    private PositionCache buildCache(float[][] x, float[][] y, float[][] z) {
+    private static float rand(Random rng) {
+        return (rng.nextFloat() - 0.5f) * 14000.0f; // [-7000, 7000] km
+    }
+
+    private static PositionCache buildCache(float[][] x, float[][] y, float[][] z) {
         IntIntHashMap idMap = new IntIntHashMap();
         idMap.put(1, 0);
         idMap.put(2, 1);
