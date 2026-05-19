@@ -108,9 +108,6 @@ public class CollisionProbabilityService {
         cov.setEntry(0, 0, sigR * sigR);
         cov.setEntry(1, 1, sigT * sigT);
         cov.setEntry(2, 2, sigW * sigW);
-        cov.setEntry(3, 3, 1e-6);
-        cov.setEntry(4, 4, 1e-6);
-        cov.setEntry(5, 5, 1e-6);
 
         return new StateCovariance(cov, event.absoluteDate(), LOFType.QSW);
     }
