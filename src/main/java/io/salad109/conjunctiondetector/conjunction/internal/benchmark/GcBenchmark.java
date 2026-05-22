@@ -40,7 +40,7 @@ public class GcBenchmark extends BenchmarkRunner implements CommandLineRunner {
     }
 
     @Override
-    public void run(String @NonNull ... args) throws InterruptedException {
+    public void run(String @NonNull ... args) {
         log.info("");
         log.info("Starting GC benchmark ({} iterations)", ITERATIONS);
         log.info("");
@@ -52,9 +52,8 @@ public class GcBenchmark extends BenchmarkRunner implements CommandLineRunner {
         log.info("Locked: tolerance={} km, stepRatio={}, stride={}, cellRatio={}",
                 TOLERANCE_KM, STEP_RATIO, INTERPOLATION_STRIDE, CELL_RATIO);
 
-        double stepSeconds = TOLERANCE_KM / STEP_RATIO;
-        List<BenchmarkResult> results = runIterations(satellites, TOLERANCE_KM,
-                STEP_RATIO, stepSeconds, INTERPOLATION_STRIDE, CELL_RATIO, ITERATIONS);
+        List<BenchmarkResult> results = runIterations(satellites,
+                new ScanParams(TOLERANCE_KM, STEP_RATIO, INTERPOLATION_STRIDE, CELL_RATIO), ITERATIONS);
 
         String gcName = ManagementFactory.getRuntimeMXBean().getInputArguments().stream()
                 .filter(arg -> arg.startsWith("-XX:+Use") && arg.endsWith("GC"))

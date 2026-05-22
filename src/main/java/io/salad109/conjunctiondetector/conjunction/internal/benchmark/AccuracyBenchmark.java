@@ -46,7 +46,7 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
     }
 
     @Override
-    public void run(String @NonNull ... args) throws InterruptedException {
+    public void run(String @NonNull ... args) {
         log.info("");
         log.info("Starting conjunction accuracy benchmark");
         log.info("");
@@ -64,8 +64,8 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
         {
             List<BenchmarkResult> results = new ArrayList<>();
             for (int stepRatio : STEP_RATIO_VALUES) {
-                double stepSeconds = TOLERANCE_KM / stepRatio;
-                results.addAll(runIterations(satellites, TOLERANCE_KM, stepRatio, stepSeconds, DEFAULT_STRIDE, DEFAULT_CELL_RATIO, ITERATIONS));
+                results.addAll(runIterations(satellites,
+                        new ScanParams(TOLERANCE_KM, stepRatio, DEFAULT_STRIDE, DEFAULT_CELL_RATIO), ITERATIONS));
             }
             writeCsv(results, Paths.get("docs", "1-step-ratio", "conjunction_benchmark.csv"));
         }
@@ -75,9 +75,9 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
         log.info("Locked: stepRatio={}, cellRatio={}", DEFAULT_STEP_RATIO, DEFAULT_CELL_RATIO);
         {
             List<BenchmarkResult> results = new ArrayList<>();
-            double stepSeconds = TOLERANCE_KM / DEFAULT_STEP_RATIO;
             for (int stride : STRIDE_VALUES) {
-                results.addAll(runIterations(satellites, TOLERANCE_KM, DEFAULT_STEP_RATIO, stepSeconds, stride, DEFAULT_CELL_RATIO, ITERATIONS));
+                results.addAll(runIterations(satellites,
+                        new ScanParams(TOLERANCE_KM, DEFAULT_STEP_RATIO, stride, DEFAULT_CELL_RATIO), ITERATIONS));
             }
             writeCsv(results, Paths.get("docs", "2-interpolation-stride", "conjunction_benchmark.csv"));
         }
@@ -87,9 +87,9 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
         log.info("Locked: stepRatio={}, stride={}", DEFAULT_STEP_RATIO, DEFAULT_STRIDE);
         {
             List<BenchmarkResult> results = new ArrayList<>();
-            double stepSeconds = TOLERANCE_KM / DEFAULT_STEP_RATIO;
             for (double cellRatio : CELL_RATIO_VALUES) {
-                results.addAll(runIterations(satellites, TOLERANCE_KM, DEFAULT_STEP_RATIO, stepSeconds, DEFAULT_STRIDE, cellRatio, ITERATIONS));
+                results.addAll(runIterations(satellites,
+                        new ScanParams(TOLERANCE_KM, DEFAULT_STEP_RATIO, DEFAULT_STRIDE, cellRatio), ITERATIONS));
             }
             writeCsv(results, Paths.get("docs", "3-cell-size-ratio", "conjunction_benchmark.csv"));
         }
@@ -100,8 +100,8 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
         {
             List<BenchmarkResult> results = new ArrayList<>();
             for (double toleranceKm : TOLERANCE_VALUES) {
-                double stepSeconds = toleranceKm / DEFAULT_STEP_RATIO;
-                results.addAll(runIterations(satellites, toleranceKm, DEFAULT_STEP_RATIO, stepSeconds, DEFAULT_STRIDE, DEFAULT_CELL_RATIO, ITERATIONS));
+                results.addAll(runIterations(satellites,
+                        new ScanParams(toleranceKm, DEFAULT_STEP_RATIO, DEFAULT_STRIDE, DEFAULT_CELL_RATIO), ITERATIONS));
             }
             writeCsv(results, Paths.get("docs", "4-conjunction-tolerance", "conjunction_benchmark.csv"));
         }

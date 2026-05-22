@@ -4,9 +4,9 @@ All-vs-all satellite conjunction screener. Scans the full public catalog (~30,00
 in under 30 seconds on consumer hardware.
 
 Validated against [CelesTrak SOCRATES](https://celestrak.org/SOCRATES/): when filtered to equivalent scope
-(payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.4% of SOCRATES events
+(payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.8% of SOCRATES events
 are also flagged by this pipeline, with TCA agreeing to 9 ms and miss distance to 5 m at p95 - see
-[docs/8](docs/8-socrates-comparison) for the breakdown. Full all-vs-all screening finds ~48,000 conjunctions per 24h
+[docs/8](docs/8-socrates-comparison) for the breakdown. Full all-vs-all screening finds ~44,000 conjunctions per 24h
 window, including secondary pairs that SOCRATES excludes.
 
 Backtested against the 2009 Iridium 33 / Cosmos 2251 collision and the 1996 CERISE / Ariane debris collision. The
@@ -19,8 +19,8 @@ pipeline flags both events with 10 and 7 ms TCA accuracy respectively.
 | Window           | 24h (configurable)                           | 7 days                   |
 | Threshold        | 5 km (configurable)                          | 5 km                     |
 | Scope            | All-vs-all (~450M pairs)                     | Primaries vs secondaries |
-| 24h conjunctions | ~48,000 (~19,000 filtered to SOCRATES scope) | ~19,000                  |
-| Compute time     | ~30 seconds (~2,880x realtime)               | ~10 hours (17x realtime) |
+| 24h conjunctions | ~44,000 (~19,000 filtered to SOCRATES scope) | ~19,000                  |
+| Compute time     | ~24 seconds (~3,600x realtime)               | ~10 hours (17x realtime) |
 
 ## How It Works
 
@@ -67,16 +67,15 @@ compound in complex ways when combined, so the Pareto analysis sweeps all parame
 
 Selected Pareto-optimal configurations:
 
-| Step ratio | Stride | Cell ratio | Cell (km) | Accuracy   | Time    |
-|------------|--------|------------|-----------|------------|---------|
-| 9          | 25     | 1.0        | 72.0      | 100.00%    | 30s     |
-| 8          | 25     | 1.0        | 72.0      | 99.99%     | 27s     |
-| 8          | 40     | 1.3        | 55.4      | 99.89%     | 23s     |
-| **8**      | **50** | **1.5**    | **48.0**  | **99.43%** | **21s** |
-| 7          | 50     | 1.2        | 60.0      | 98.42%     | 20s     |
+| Step ratio | Stride | Cell ratio | Cell (km) | Jaccard    | Coverage   | Fabrication | Time    |
+|------------|--------|------------|-----------|------------|------------|-------------|---------|
+| 9          | 30     | 1.3        | 55.4      | 1.0000     | 1.0000     | 0.0000      | 31s     |
+| 8          | 40     | 1.1        | 65.5      | 0.9999     | 0.9999     | 0.0000      | 26s     |
+| **8**      | **50** | **1.3**    | **55.4**  | **0.9986** | **0.9987** | **0.0000**  | **24s** |
+| 8          | 50     | 1.5        | 48.0      | 0.9948     | 0.9948     | 0.0000      | 23s     |
+| 7          | 45     | 1.3        | 55.4      | 0.9803     | 0.9804     | 0.0000      | 22s     |
 
-Default configuration (bold) is the default a good compromise, trading 0.6% accuracy for a 1.4x speedup over the safest
-option.
+Default configuration (bold) trades 0.14% Jaccard for a 1.3x speedup over the safest option.
 
 ## Architecture
 

@@ -59,19 +59,19 @@ times of closest approach are within 1 minute of each other.
 | Events                                   |   Count |                                         |
 |------------------------------------------|--------:|----------------------------------------:|
 | SOCRATES total                           | 134,548 |                                         |
-| Our total                                | 134,183 |                                         |
-| Matched (both flagged the same event)    | 133,737 |                                         |
-| Ours only (we flagged, SOCRATES did not) |     446 | **99.7%** of ours SOCRATES also flagged |
-| SOCRATES only (they flagged, we did not) |     811 |   **99.4%** of SOCRATES we also flagged |
+| Our total                                | 134,680 |                                         |
+| Matched (both flagged the same event)    | 134,228 |                                         |
+| Ours only (we flagged, SOCRATES did not) |     452 | **99.7%** of ours SOCRATES also flagged |
+| SOCRATES only (they flagged, we did not) |     320 |      **99.8%** of SOCRATES we also flag |
 
 ## Physics agreement on matched events
 
-For the 133,737 events both pipelines flag:
+For the 134,228 events both pipelines flag:
 
 |               Quantity | Median |    p95 |
 |-----------------------:|-------:|-------:|
 |               ΔTCA (s) |  0.000 |  0.009 |
-|    Δmiss-distance (km) | 0.0005 |  0.005 |
+|    Δmiss-distance (km) | 0.0005 | 0.0053 |
 | Δrelative-speed (km/s) |     ~0 | 0.0005 |
 
 TCA agrees to **9 ms** and miss distance to **5 m** at p95.
@@ -83,25 +83,25 @@ TCA agrees to **9 ms** and miss distance to **5 m** at p95.
 
 | Day | SOCRATES |   Ours | Matched | % of ours SOCRATES flagged | % of SOCRATES we flagged |
 |----:|---------:|-------:|--------:|---------------------------:|-------------------------:|
-|   1 |   19,271 | 19,161 |  19,129 |                      99.8% |                    99.3% |
-|   2 |   19,235 | 19,183 |  19,105 |                      99.6% |                    99.3% |
-|   3 |   19,068 | 19,036 |  18,967 |                      99.6% |                    99.5% |
-|   4 |   19,520 | 19,468 |  19,429 |                      99.8% |                    99.5% |
-|   5 |   19,252 | 19,229 |  19,139 |                      99.5% |                    99.4% |
-|   6 |   19,000 | 18,971 |  18,875 |                      99.5% |                    99.3% |
-|   7 |   19,202 | 19,135 |  19,093 |                      99.8% |                    99.4% |
+|   1 |   19,271 | 19,242 |  19,210 |                      99.8% |                    99.7% |
+|   2 |   19,235 | 19,265 |  19,185 |                      99.6% |                    99.7% |
+|   3 |   19,068 | 19,105 |  19,034 |                      99.6% |                    99.8% |
+|   4 |   19,520 | 19,509 |  19,470 |                      99.8% |                    99.7% |
+|   5 |   19,252 | 19,301 |  19,211 |                      99.5% |                    99.8% |
+|   6 |   19,000 | 19,065 |  18,968 |                      99.5% |                    99.8% |
+|   7 |   19,202 | 19,193 |  19,150 |                      99.8% |                    99.7% |
 
-Agreement is flat at 99%+ across all seven days.
+Agreement is flat at 99.5%+ across all seven days.
 
-## The remaining 0.6%
+## The remaining 0.2%
 
 ![Missed SOCRATES events by their reported miss distance](3_missed_miss_distance.png)
 
-811 SOCRATES events have no match in our catalog. The histograms plot their SOCRATES-reported miss distance and relative
+320 SOCRATES events have no match in our catalog. The histograms plot their SOCRATES-reported miss distance and relative
 velocity. The spike against the 5 km wall is the boundary-disagreement bucket: SOCRATES says just under 5 km, our system
-says just over, and the event is skipped. The rest spreads across the 0-5 km range with no clear pattern; cause unknown.
-The velocity panel shows a second spike near zero: ~85 missed events sit between 10 and 340 m/s, a long tail of slow
-co-orbiting pairs that survived the 10 m/s formation-flight filter.
+says just over, and the event is skipped. The remaining 216 events spread across the 0-5 km range with no clear pattern;
+cause unknown. The velocity panel shows a second spike near zero: 87 missed events sit below 340 m/s, a long tail of
+slow co-orbiting pairs that survived the 10 m/s formation-flight filter.
 
 ## Inputs (regenerable)
 
