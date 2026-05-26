@@ -2,12 +2,14 @@ package io.salad109.conjunctiondetector.ui.internal;
 
 import io.salad109.conjunctiondetector.conjunction.ConjunctionService;
 import io.salad109.conjunctiondetector.ingestion.IngestionService;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
+@Profile("dev")
 public class DevController {
 
     private final IngestionService ingestionService;
