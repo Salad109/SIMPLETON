@@ -2,19 +2,21 @@
 
 **S**atellite **I**ntersection **M**onitoring **P**ipeline for **L**ocating **E**very **T**hreatening **O**rbital **N**eighbor
 
+[Live demo](https://simpleton.zlosnik.dev/)
+
 All-vs-all satellite conjunction screener. Scans the full public catalog (~30,000 objects) for sub-5 km close approaches
 in under 30 seconds on consumer hardware.
 
 Validated against [CelesTrak SOCRATES](https://celestrak.org/SOCRATES/): when filtered to equivalent scope
 (payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.8% of SOCRATES events
-are also flagged by this pipeline, with TCA agreeing to 9 ms and miss distance to 5 m at p95 - see
-[docs/8](docs/8-socrates-comparison) for the breakdown. Full all-vs-all screening finds ~44,000 conjunctions per 24h
+are also flagged by this pipeline, with median TCA agreement under 1 ms and median miss distance of 0.5 m - see
+[Validation](#validation) below for the breakdown. Full all-vs-all screening finds ~44,000 conjunctions per 24h
 window, including secondary pairs that SOCRATES excludes.
 
 Backtested against the 2009 Iridium 33 / Cosmos 2251 collision and the 1996 CERISE / Ariane debris collision. The
 pipeline flags both events with 10 and 7 ms TCA accuracy respectively.
 
-|                  | This                                         | SOCRATES (CelesTrak)     |
+|                  | SIMPLETON                                    | CelesTrak SOCRATES Plus  |
 |------------------|----------------------------------------------|--------------------------|
 | Input            | Space-Track TLEs                             | Space-Track TLEs         |
 | Propagator       | SGP4 (Orekit)                                | SGP4 (STK)               |
@@ -52,9 +54,32 @@ SGP4 calls. Most candidates get discarded here because the analytical minimum ex
 get a single SGP4 call to confirm. Events that pass are scored with collision probability synthesized from empirical
 SGP4 error models.
 
+## Validation
+
+Both pipelines were run on the same TLE catalog over the same 7-day window with matching scoping filters
+(primary-vs-all, intra-constellation excluded, formation-flight excluded). Events match when both pipelines flag
+the same satellite pair with TCAs within 1 minute.
+
+| Events         |   Count |
+|----------------|--------:|
+| SOCRATES total | 134,598 |
+| Our total      | 134,648 |
+| Matched        | 134,263 |
+| Ours only      |     385 |
+| Missed         |     335 |
+
+99.8% of SOCRATES events are also flagged by this pipeline. 99.7% of this pipeline's events are also flagged by
+SOCRATES. Agreement is flat at 99.5%+ across all seven days.
+
+![ΔTCA and Δmiss-distance error distributions vs SOCRATES](docs/8-socrates-comparison/1_errors.png)
+
+On matched events, TCA agrees to 9 ms and miss distance to 5 m at p95.
+
+Methodology, TLE replication procedure, and analysis of the remaining 0.2% available at [docs/8](docs/8-socrates-comparison).
+
 ## Parameter Tuning
 
-The [/docs](docs) directory contains experiments from benchmarking each tunable parameter. Individually safe choices
+The [docs/](docs) directory contains experiments from benchmarking each tunable parameter. Individually safe choices
 compound in complex ways when combined, so the Pareto analysis sweeps all parameters simultaneously.
 
 | # | Experiment                                            | Description                                        |
@@ -77,27 +102,25 @@ Selected Pareto-optimal configurations:
 | 8          | 50     | 1.5        | 48.0      | 0.9948     | 0.9948     | 0.0000      | 23s     |
 | 7          | 45     | 1.3        | 55.4      | 0.9803     | 0.9804     | 0.0000      | 22s     |
 
-Default configuration (bold) trades 0.14% Jaccard for a 1.3x speedup over the safest option.
-
-## Architecture
-
-![Module diagram](https://github.com/user-attachments/assets/0a541237-4e1f-42a0-bd9d-487089dad69a)
-
-Five Spring Modulith modules:
-
-- **Ui** - Controllers and scheduled jobs
-- **Conjunction** - Detection algorithms and conjunction storage
-- **Ingestion** - Catalog synchronization from Space-Track
-- **Satellite** - Satellite entity and repository
-- **Spacetrack** - HTTP client for Space-Track.org API
+Default configuration (bold) is a good compromise, trading 0.14% Jaccard for a 1.3x speedup over the safest option.
 
 ## Tech Stack
 
 - Java 25
-- Spring Boot 4 / Spring Modulith
+- Spring Boot 4
 - Orekit 13
 - PostgreSQL / Flyway
 - HTMX / Thymeleaf
+
+## Architecture
+
+Five Spring Modulith modules:
+
+- Ui - Controllers and scheduled jobs
+- Conjunction - Detection algorithms and conjunction storage
+- Ingestion - Catalog synchronization from Space-Track
+- Satellite - Satellite entity and repository
+- Spacetrack - HTTP client for Space-Track.org API
 
 ## Setup
 

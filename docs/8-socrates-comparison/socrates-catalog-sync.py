@@ -105,10 +105,11 @@ def login(env):
     return opener
 
 
+def is_cached(dest):
+    return dest.exists() and dest.stat().st_size > 0
+
+
 def fetch_slice(opener, start, end, dest):
-    if dest.exists() and dest.stat().st_size > 0:
-        print(f"  skip {dest.name} (cached)")
-        return
     url = (
         "https://www.space-track.org/basicspacedata/query/class/gp_history"
         "/DECAY_DATE/null-val"
@@ -241,9 +242,17 @@ def main():
     targets = extract_targets(SOCRATES_CSV)
 
     print(f"fetching gp_history: {T_START.isoformat()} -> {T_END.isoformat()} ({SLICE_HOURS}h slices)")
-    opener = login(env)
-    for i, (s, e) in enumerate(time_slices()):
-        fetch_slice(opener, s, e, SLICE_DIR / f"slice-{i:02d}.json")
+    pending = [(i, s, e, SLICE_DIR / f"slice-{i:02d}.json") for i, (s, e) in enumerate(time_slices())]
+    misses = [job for job in pending if not is_cached(job[3])]
+    for _, _, _, dest in pending:
+        if is_cached(dest):
+            print(f"  skip {dest.name} (cached)")
+    if misses:
+        opener = login(env)
+        for _, s, e, dest in misses:
+            fetch_slice(opener, s, e, dest)
+    else:
+        print("  all slices cached, skipping Space-Track login")
 
     files = sorted(SLICE_DIR.glob("slice-*.json"))
     records = merge_by_target(files, targets)

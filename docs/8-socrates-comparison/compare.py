@@ -23,13 +23,8 @@ CONSTELLATION_PATTERNS = [
     ("ONEWEB",     re.compile(r"^ONEWEB\b")),
     ("KUIPER",     re.compile(r"^KUIPER\b")),
     ("QIANFAN",    re.compile(r"^QIANFAN\b")),
-    ("GUOWANG",    re.compile(r"^GUOWANG\b|^GW-")),
-    ("IRIDIUM",    re.compile(r"^IRIDIUM\b")),
-    ("GLOBALSTAR", re.compile(r"^GLOBALSTAR\b")),
-    ("FLOCK",      re.compile(r"^FLOCK\b")),
-    ("LEMUR",      re.compile(r"^LEMUR\b")),
-    ("SPIRESAT",   re.compile(r"^SPIRESAT\b")),
-    ("PLANET",     re.compile(r"^PLANET\b")),
+    ("HULIANWANG", re.compile(r"^HULIANWANG\b")),
+    ("GEESAT",     re.compile(r"^GEESAT\b")),
 ]
 
 
@@ -122,17 +117,22 @@ def stats(label, x):
     return f"{label}: median={x.median():.4f}  p95={x.abs().quantile(0.95):.4f}"
 
 
-def plot_hist(values, title, xlabel, path):
-    if values.empty:
+def plot_error_histograms(matched, path):
+    if matched.empty:
         return
-    lo, hi = values.quantile(0.01), values.quantile(0.99)
-    fig, ax = plt.subplots(figsize=(9, 5))
-    ax.hist(values.clip(lo, hi), bins=80, color="#2ca02c", edgecolor="black", linewidth=0.3)
-    ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel("Matched events")
-    ax.set_title(title)
-    ax.grid(True, alpha=0.3)
+    specs = [
+        (matched["delta_tca_sec"], "TCA error (ours - SOCRATES)", "ΔTCA [s]"),
+        (matched["delta_miss_km"], "Miss-distance error (ours - SOCRATES)", "Δmiss distance [km]"),
+    ]
+    fig, axes = plt.subplots(2, 1, figsize=(9, 9))
+    for ax, (values, title, xlabel) in zip(axes, specs):
+        lo, hi = values.quantile(0.01), values.quantile(0.99)
+        ax.hist(values.clip(lo, hi), bins=80, color="#2ca02c", edgecolor="black", linewidth=0.3)
+        ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel("Matched events")
+        ax.set_title(title)
+        ax.grid(True, alpha=0.3)
     fig.tight_layout()
     fig.savefig(path, dpi=120)
     plt.close(fig)
@@ -257,17 +257,14 @@ def main():
     print(f"\nPer-day overlap")
     time_bucket_overlap(soc, ours, WINDOW_START, 24, WINDOW_HOURS // 24)
 
-    plot_missed_miss_distance(soc_un, HERE / "3_missed_miss_distance.png")
+    plot_missed_miss_distance(soc_un, HERE / "2_missed_miss_distance.png")
 
     if not matched.empty:
         print(f"\nErrors on matched events")
         print(f"  {stats('  dTCA (s)         ', matched['delta_tca_sec'])}")
         print(f"  {stats('  d miss-dist (km) ', matched['delta_miss_km'])}")
         print(f"  {stats('  d rel-speed(km/s)', matched['delta_rel_speed_kms'])}")
-        plot_hist(matched["delta_tca_sec"], "TCA error (ours - SOCRATES)",
-                  "ΔTCA [s]", HERE / "1_delta_tca.png")
-        plot_hist(matched["delta_miss_km"], "Miss-distance error (ours - SOCRATES)",
-                  "Δmiss distance [km]", HERE / "2_delta_range.png")
+        plot_error_histograms(matched, HERE / "1_errors.png")
 
 
 if __name__ == "__main__":
