@@ -1,4 +1,6 @@
-# Conjunction Detector
+# SIMPLETON
+
+**S**atellite **I**ntersection **M**onitoring **P**ipeline for **L**ocating **E**very **T**hreatening **O**rbital **N**eighbor
 
 All-vs-all satellite conjunction screener. Scans the full public catalog (~30,000 objects) for sub-5 km close approaches
 in under 30 seconds on consumer hardware.

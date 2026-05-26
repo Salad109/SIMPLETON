@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.salad109</groupId>
-    <artifactId>conjunction-detector</artifactId>
+    <artifactId>simpleton</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>conjunction-detector</name>
-    <description>conjunction-detector</description>
+    <name>simpleton</name>
+    <description>simpleton</description>
     <url/>
     <licenses>
         <license/>

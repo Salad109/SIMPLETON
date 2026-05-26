@@ -17,8 +17,8 @@ services:
       retries: 5
 
   app:
-    image: ghcr.io/salad109/satellite-conjunction-detector:latest
-    container_name: conjunction-detector
+    image: ghcr.io/salad109/simpleton:latest
+    container_name: simpleton
     depends_on:
       postgres:
         condition: service_healthy
