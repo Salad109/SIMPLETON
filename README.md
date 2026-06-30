@@ -1,6 +1,7 @@
 # SIMPLETON
 
-**S**atellite **I**ntersection **M**onitoring **P**ipeline for **L**ocating **E**very **T**hreatening **O**rbital **N**eighbor
+**S**atellite **I**ntersection **M**onitoring **P**ipeline for **L**ocating **E**very **T**hreatening **O**rbital **N**
+eighbor
 
 [Live demo](https://simpleton.zlosnik.dev/)
 
@@ -25,6 +26,20 @@ pipeline flags both events with 10 and 7 ms TCA accuracy respectively.
 | Scope            | All-vs-all (~450M pairs)                     | Primaries vs secondaries |
 | 24h conjunctions | ~44,000 (~19,000 filtered to SOCRATES scope) | ~19,000                  |
 | Compute time     | ~24 seconds (~3,600x realtime)               | ~10 hours (17x realtime) |
+
+## Why It Matters
+
+Full-catalog screening in under 30 seconds is not the point by itself. Screening accuracy is capped by public TLE
+quality, so out-speeding other screeners on the same data doesn't add anything. The value is what cheap screening
+unlocks.
+
+For example, collision-avoidance maneuver planning. Dodging one conjunction can steer a satellite into
+several new ones, so finding a burn that clears the threat without creating worse ones means screening the whole
+catalog against each candidate maneuver. At seconds per scan, a brute-force sweep of hundreds of candidate burns is
+actually feasible. It's just a matter of adding "phantom" candidate satellites to the catalog before running the
+detection pipeline.
+
+It could also help with debris-removal target selection and launch-window screening.
 
 ## How It Works
 
@@ -75,7 +90,8 @@ SOCRATES. Agreement is flat at 99.5%+ across all seven days.
 
 On matched events, TCA agrees to 9 ms and miss distance to 5 m at p95.
 
-Methodology, TLE replication procedure, and analysis of the remaining 0.2% available at [docs/8](docs/8-socrates-comparison).
+Methodology, TLE replication procedure, and analysis of the remaining 0.2% available
+at [docs/8](docs/8-socrates-comparison).
 
 ## Parameter Tuning
 

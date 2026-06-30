@@ -15,6 +15,18 @@ class AnalyticalMinTest {
 
     private final ScanService scanService = new ScanService(null);
 
+    private static float rand(Random rng) {
+        return (rng.nextFloat() - 0.5f) * 14000.0f; // [-7000, 7000] km
+    }
+
+    private static PositionCache buildCache(float[][] x, float[][] y, float[][] z) {
+        IntIntHashMap idMap = new IntIntHashMap();
+        idMap.put(1, 0);
+        idMap.put(2, 1);
+        OffsetDateTime[] times = {OffsetDateTime.now(ZoneOffset.UTC), OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(10)};
+        return new PositionCache(idMap, new int[]{1, 2}, times, x, y, z);
+    }
+
     @Test
     void minimumAtMidpointForHeadOnApproach() {
         // A: (0,0,0)->(10,0,0), B: (10,0,0)->(0,0,0)
@@ -119,17 +131,5 @@ class AnalyticalMinTest {
             assertThat(result[0]).as("trial %d distSq", trial).isGreaterThanOrEqualTo(0.0);
             assertThat(result[1]).as("trial %d t", trial).isBetween(0.0, 1.0);
         }
-    }
-
-    private static float rand(Random rng) {
-        return (rng.nextFloat() - 0.5f) * 14000.0f; // [-7000, 7000] km
-    }
-
-    private static PositionCache buildCache(float[][] x, float[][] y, float[][] z) {
-        IntIntHashMap idMap = new IntIntHashMap();
-        idMap.put(1, 0);
-        idMap.put(2, 1);
-        OffsetDateTime[] times = {OffsetDateTime.now(ZoneOffset.UTC), OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(10)};
-        return new PositionCache(idMap, new int[]{1, 2}, times, x, y, z);
     }
 }
