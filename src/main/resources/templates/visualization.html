@@ -2,9 +2,9 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head('Conjunction #' + ${visualization.id})}"></head>
 <script type="importmap">
-    {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.183.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.183.0/examples/jsm/"}}
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/":"/vendor/three/addons/"}}
 </script>
-<script src="https://cdn.jsdelivr.net/npm/satellite.js@6.0.2/dist/satellite.min.js"></script>
+<script src="/vendor/satellite.min.js"></script>
 </head>
 <body>
 
