@@ -9,7 +9,7 @@ import io.salad109.conjunctiondetector.ingestion.IngestionService;
 import io.salad109.conjunctiondetector.ingestion.SyncResult;
 import io.salad109.conjunctiondetector.satellite.SatelliteBriefInfo;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
-import io.salad109.conjunctiondetector.spacetrack.OmmRecord;
+import io.salad109.conjunctiondetector.spacetrack.GpRecord;
 import io.salad109.conjunctiondetector.spacetrack.SpaceTrackClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,22 +73,22 @@ class PipelineIntegrationTest {
         return Clock.fixed(LocalDateTime.of(2009, 2, 10, 0, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
     }
 
-    private static OmmRecord iridium33() {
-        return buildOmm(24946, "IRIDIUM 33",
+    private static GpRecord iridium33() {
+        return buildGp(24946, "IRIDIUM 33",
                 LocalDateTime.of(2009, 2, 9, 18, 49, 39),
                 "1 24946U 97051C   09040.78448243 +.00000153 +00000-0 +47668-4 0  9994",
                 "2 24946 086.3994 121.7028 0002288 085.1644 274.9812 14.34219863597336");
     }
 
-    private static OmmRecord cosmos2251() {
-        return buildOmm(22675, "COSMOS 2251",
+    private static GpRecord cosmos2251() {
+        return buildGp(22675, "COSMOS 2251",
                 LocalDateTime.of(2009, 2, 9, 11, 57, 36),
                 "1 22675U 93036A   09040.49834364 -.00000001  00000-0  95251-5 0  9996",
                 "2 22675 074.0355 019.4646 0016027 098.7014 261.5952 14.31135643817415");
     }
 
-    private static OmmRecord buildOmm(int noradId, String name, LocalDateTime epoch, String tle1, String tle2) {
-        return new OmmRecord(noradId, name, name, "PAYLOAD", null, null, null, null, null,
+    private static GpRecord buildGp(int noradId, String name, LocalDateTime epoch, String tle1, String tle2) {
+        return new GpRecord(noradId, name, name, "PAYLOAD", null, null, null, null, null,
                 epoch, epoch, name, tle1, tle2,
                 BigDecimal.ONE, null, null,
                 BigDecimal.ZERO, null, null, null, null, null, null,
@@ -156,8 +156,8 @@ class PipelineIntegrationTest {
 
     @Test
     void syncSkipsInvalidRecordsAndDeletesMissingOnes() throws IOException {
-        // Stale OMM with epoch >30 days before frozen clock must be filtered out
-        OmmRecord stale = buildOmm(99999, "STALE",
+        // Stale GP with epoch >10 days before frozen clock must be filtered out
+        GpRecord stale = buildGp(99999, "STALE",
                 LocalDateTime.of(2008, 12, 1, 0, 0),
                 "1 99999U 00000A   08336.00000000 +.00000000 +00000-0 +00000-0 0  0000",
                 "2 99999 000.0000 000.0000 0000000 000.0000 000.0000 00.00000000000000");

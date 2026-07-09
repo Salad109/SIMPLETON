@@ -3,7 +3,7 @@ package io.salad109.conjunctiondetector.ingestion;
 import io.salad109.conjunctiondetector.DataChangedEvent;
 import io.salad109.conjunctiondetector.satellite.Satellite;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
-import io.salad109.conjunctiondetector.spacetrack.OmmRecord;
+import io.salad109.conjunctiondetector.spacetrack.GpRecord;
 import io.salad109.conjunctiondetector.spacetrack.SpaceTrackClient;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -53,7 +53,7 @@ public class IngestionService {
         OffsetDateTime startedAt = OffsetDateTime.now(clock);
 
         try {
-            List<OmmRecord> records = spaceTrackClient.fetchCatalog();
+            List<GpRecord> records = spaceTrackClient.fetchCatalog();
             ProcessingResult processingResult = processRecords(records);
             SyncResult syncResult = new SyncResult(startedAt,
                     processingResult.created(),
@@ -83,14 +83,15 @@ public class IngestionService {
     }
 
     /**
-     * Process OMM records - upsert satellites with their current TLE data.
+     * Process GP records - upsert satellites with their current TLE data.
      */
-    private ProcessingResult processRecords(List<OmmRecord> records) {
+    private ProcessingResult processRecords(List<GpRecord> records) {
         log.debug("Processing {} records...", records.size());
 
         // Filter to valid records only
-        LocalDateTime epochCutoff = LocalDateTime.now(clock).minusDays(30);
-        List<OmmRecord> validRecords = records.stream()
+        // The 10-day epoch bound mirrors the query's EPOCH/>now-10
+        LocalDateTime epochCutoff = LocalDateTime.now(clock).minusDays(10);
+        List<GpRecord> validRecords = records.stream()
                 .filter(r -> r.isValid(epochCutoff))
                 .toList();
 
@@ -99,7 +100,7 @@ public class IngestionService {
 
         // Extract catalog IDs
         List<Integer> catalogIds = validRecords.stream()
-                .map(OmmRecord::noradCatId)
+                .map(GpRecord::noradCatId)
                 .distinct()
                 .toList();
 
@@ -115,15 +116,15 @@ public class IngestionService {
         List<Satellite> toUpdate = new ArrayList<>();
         int unchanged = 0;
 
-        for (OmmRecord omm : validRecords) {
-            Satellite existing = existingById.get(omm.noradCatId());
+        for (GpRecord gp : validRecords) {
+            Satellite existing = existingById.get(gp.noradCatId());
 
             if (existing == null) {
                 // New satellite
-                toCreate.add(createSatellite(omm));
-            } else if (hasChanged(existing, omm)) {
+                toCreate.add(createSatellite(gp));
+            } else if (hasChanged(existing, gp)) {
                 // Existing satellite with changes
-                updateSatellite(existing, omm);
+                updateSatellite(existing, gp);
                 toUpdate.add(existing);
             } else {
                 // Existing satellite without changes
@@ -143,49 +144,49 @@ public class IngestionService {
         return new ProcessingResult(created, updated, unchanged, skipped, deleted);
     }
 
-    private void updateSatellite(Satellite sat, OmmRecord omm) {
-        sat.setObjectName(omm.objectName());
-        sat.setObjectId(omm.objectId());
-        sat.setObjectType(omm.objectType());
-        sat.setClassificationType(omm.classificationType());
-        sat.setCountryCode(omm.countryCode());
-        sat.setLaunchDate(omm.launchDate());
-        sat.setSite(omm.site());
-        sat.setDecayDate(omm.decayDate());
-        sat.setEpoch(omm.getEpochUtc());
-        sat.setCreationDate(omm.creationDate());
-        sat.setTleLine0(omm.tleLine0());
-        sat.setTleLine1(omm.tleLine1());
-        sat.setTleLine2(omm.tleLine2());
-        sat.setMeanMotion(omm.meanMotion());
-        sat.setMeanMotionDot(omm.meanMotionDot());
-        sat.setMeanMotionDdot(omm.meanMotionDdot());
-        sat.setEccentricity(omm.eccentricity());
-        sat.setInclination(omm.inclination());
-        sat.setRaan(omm.raan());
-        sat.setArgPerigee(omm.argPerigee());
-        sat.setMeanAnomaly(omm.meanAnomaly());
-        sat.setEphemerisType(omm.ephemerisType());
-        sat.setBstar(omm.bstar());
-        sat.setRcsSize(omm.rcsSize());
-        sat.setElementSetNo(omm.elementSetNo());
-        sat.setRevAtEpoch(omm.revAtEpoch());
-        sat.setSemiMajorAxisKm(omm.semiMajorAxis());
-        sat.setPeriod(omm.period());
-        sat.setPerigeeKm(omm.periapsis());
-        sat.setApogeeKm(omm.apoapsis());
-        sat.setFileNumber(omm.file());
-        sat.setGpId(omm.gpId());
+    private void updateSatellite(Satellite sat, GpRecord gp) {
+        sat.setObjectName(gp.objectName());
+        sat.setObjectId(gp.objectId());
+        sat.setObjectType(gp.objectType());
+        sat.setClassificationType(gp.classificationType());
+        sat.setCountryCode(gp.countryCode());
+        sat.setLaunchDate(gp.launchDate());
+        sat.setSite(gp.site());
+        sat.setDecayDate(gp.decayDate());
+        sat.setEpoch(gp.getEpochUtc());
+        sat.setCreationDate(gp.creationDate());
+        sat.setTleLine0(gp.tleLine0());
+        sat.setTleLine1(gp.tleLine1());
+        sat.setTleLine2(gp.tleLine2());
+        sat.setMeanMotion(gp.meanMotion());
+        sat.setMeanMotionDot(gp.meanMotionDot());
+        sat.setMeanMotionDdot(gp.meanMotionDdot());
+        sat.setEccentricity(gp.eccentricity());
+        sat.setInclination(gp.inclination());
+        sat.setRaan(gp.raan());
+        sat.setArgPerigee(gp.argPerigee());
+        sat.setMeanAnomaly(gp.meanAnomaly());
+        sat.setEphemerisType(gp.ephemerisType());
+        sat.setBstar(gp.bstar());
+        sat.setRcsSize(gp.rcsSize());
+        sat.setElementSetNo(gp.elementSetNo());
+        sat.setRevAtEpoch(gp.revAtEpoch());
+        sat.setSemiMajorAxisKm(gp.semiMajorAxis());
+        sat.setPeriod(gp.period());
+        sat.setPerigeeKm(gp.periapsis());
+        sat.setApogeeKm(gp.apoapsis());
+        sat.setFileNumber(gp.file());
+        sat.setGpId(gp.gpId());
     }
 
-    private Satellite createSatellite(OmmRecord ommRecord) {
-        Satellite satellite = new Satellite(ommRecord.noradCatId());
-        updateSatellite(satellite, ommRecord);
+    private Satellite createSatellite(GpRecord gpRecord) {
+        Satellite satellite = new Satellite(gpRecord.noradCatId());
+        updateSatellite(satellite, gpRecord);
         return satellite;
     }
 
-    private boolean hasChanged(Satellite satellite, OmmRecord ommRecord) {
-        return satellite.getEpoch() == null || !satellite.getEpoch().equals(ommRecord.getEpochUtc());
+    private boolean hasChanged(Satellite satellite, GpRecord gpRecord) {
+        return satellite.getEpoch() == null || !satellite.getEpoch().equals(gpRecord.getEpochUtc());
     }
 
     private record ProcessingResult(int created, int updated, int unchanged, int skipped, int deleted) {

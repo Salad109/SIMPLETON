@@ -17,8 +17,8 @@ import java.util.List;
 public class SpaceTrackClient {
 
     private static final String SPACE_TRACK_LOGIN_URL = "/ajaxauth/login";
-    // DECAY_DATE/null-val filters for active (non-decayed) satellites only
-    private static final String SPACE_TRACK_QUERY_URL = "/basicspacedata/query/class/gp/DECAY_DATE/null-val/orderby/NORAD_CAT_ID/format/json";
+    // DECAY_DATE/null-val keeps only active (non-decayed) objects; EPOCH/>now-10 keeps only recently updated
+    private static final String SPACE_TRACK_QUERY_URL = "/basicspacedata/query/class/gp/DECAY_DATE/null-val/EPOCH/>now-10/orderby/NORAD_CAT_ID/format/json";
     private static final Logger log = LoggerFactory.getLogger(SpaceTrackClient.class);
     private final RestClient restClient;
     @Value("${spacetrack.username}")
@@ -60,7 +60,7 @@ public class SpaceTrackClient {
     /**
      * Fetch the GP catalog (current TLEs for all objects).
      */
-    public List<OmmRecord> fetchCatalog() throws IOException {
+    public List<GpRecord> fetchCatalog() throws IOException {
         login();
 
         log.debug("Fetching full GP catalog from Space-Track...");
@@ -68,13 +68,13 @@ public class SpaceTrackClient {
         var response = restClient.get()
                 .uri(SPACE_TRACK_QUERY_URL)
                 .retrieve()
-                .toEntity(new ParameterizedTypeReference<List<OmmRecord>>() {
+                .toEntity(new ParameterizedTypeReference<List<GpRecord>>() {
                 });
 
         if (response.getStatusCode().isError()) {
             throw new IOException("Catalog fetch failed with status: " + response.getStatusCode());
         }
-        List<OmmRecord> body = response.getBody();
+        List<GpRecord> body = response.getBody();
         if (body == null) {
             throw new IOException("Catalog fetch returned no data");
         }

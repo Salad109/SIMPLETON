@@ -10,11 +10,11 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 /**
- * OMM (Orbit Mean-Elements Message) record from Space-Track GP class.
+ * General perturbations record from Space-Track GP class.
  * Field names match the Space-Track JSON response.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record OmmRecord(
+public record GpRecord(
         @JsonProperty("NORAD_CAT_ID") Integer noradCatId,
         @JsonProperty("OBJECT_NAME") String objectName,
         @JsonProperty("OBJECT_ID") String objectId,
