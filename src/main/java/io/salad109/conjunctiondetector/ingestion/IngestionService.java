@@ -135,7 +135,8 @@ public class IngestionService {
         // Persist changes
         int created = satelliteService.save(toCreate);
         log.debug("Created {} new satellites", created);
-        int updated = satelliteService.save(toUpdate);
+        // Updated satellites are managed
+        int updated = toUpdate.size();
         log.debug("Updated {} existing satellites", updated);
 
         log.debug("Processing complete: {} created, {} updated, {} unchanged, {} skipped, {} deleted",

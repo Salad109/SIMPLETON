@@ -137,6 +137,8 @@ public class Satellite implements Persistable<Integer> {
         return noradCatId;
     }
 
+    // NORAD key is never null, so a null @Version signal "new" instead.
+    // Lets save() insert directly rather than SELECT first.
     @Override
     public boolean isNew() {
         return version == null;

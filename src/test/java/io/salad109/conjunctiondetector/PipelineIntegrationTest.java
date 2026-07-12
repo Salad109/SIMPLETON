@@ -155,6 +155,32 @@ class PipelineIntegrationTest {
     }
 
     @Test
+    void syncRefreshesChangedRecords() throws IOException {
+        when(spaceTrackClient.fetchCatalog()).thenReturn(List.of(iridium33()));
+        ingestionService.sync();
+
+        // Newer epoch of existing object must overwrite the stored one
+        GpRecord refreshed = buildGp(24946, "IRIDIUM 33",
+                LocalDateTime.of(2009, 2, 9, 23, 0, 0),
+                "1 24946U 97051C   09040.95833333 +.00000153 +00000-0 +47668-4 0  9991",
+                "2 24946 086.3994 121.7028 0002288 085.1644 274.9812 14.34219863597336");
+        when(spaceTrackClient.fetchCatalog()).thenReturn(List.of(refreshed));
+        ingestionService.sync();
+
+        SyncResult log = ingestionLogService.getRecent(1).getFirst();
+        assertThat(log.objectsUpdated()).as("changed epoch refreshes the row").isEqualTo(1);
+        assertThat(log.objectsInserted()).isZero();
+        assertThat(log.objectsUnchanged()).isZero();
+        assertThat(log.objectsSkipped()).isZero();
+        assertThat(log.objectsDeleted()).isZero();
+        assertThat(satelliteService.count()).isEqualTo(1);
+
+        assertThat(satelliteService.getByCatalogIds(List.of(24946)).get(24946).getEpoch())
+                .as("stored epoch reflects the newer element set")
+                .isEqualTo(refreshed.getEpochUtc());
+    }
+
+    @Test
     void syncSkipsInvalidRecordsAndDeletesMissingOnes() throws IOException {
         // Stale GP with epoch >10 days before frozen clock must be filtered out
         GpRecord stale = buildGp(99999, "STALE",
