@@ -6,6 +6,8 @@ import io.salad109.conjunctiondetector.satellite.SatelliteService;
 import io.salad109.conjunctiondetector.spacetrack.GpRecord;
 import io.salad109.conjunctiondetector.spacetrack.SpaceTrackClient;
 import org.apache.commons.lang3.time.StopWatch;
+import org.orekit.propagation.analytical.tle.TLE;
+import org.orekit.propagation.analytical.tle.TLEPropagator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -93,6 +95,7 @@ public class IngestionService {
         LocalDateTime epochCutoff = LocalDateTime.now(clock).minusDays(10);
         List<GpRecord> validRecords = records.stream()
                 .filter(r -> r.isValid(epochCutoff))
+                .filter(this::isPropagable)
                 .toList();
 
         int skipped = records.size() - validRecords.size();
@@ -143,6 +146,17 @@ public class IngestionService {
                 created, updated, unchanged, skipped, deleted);
 
         return new ProcessingResult(created, updated, unchanged, skipped, deleted);
+    }
+
+    private boolean isPropagable(GpRecord record) {
+        try {
+            TLE tle = new TLE(record.tleLine1(), record.tleLine2());
+            TLEPropagator.selectExtrapolator(tle);
+            return true;
+        } catch (RuntimeException e) {
+            log.debug("Skipping unpropagable satellite {}: {}", record.noradCatId(), e.getMessage());
+            return false;
+        }
     }
 
     private void updateSatellite(Satellite sat, GpRecord gp) {
