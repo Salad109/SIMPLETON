@@ -33,7 +33,7 @@ public class SpaceTrackClient {
     /**
      * Authenticate with Space-Track. Session cookies are stored automatically.
      */
-    private void login() throws IOException {
+    private void login() {
         log.debug("Authenticating with Space-Track...");
         if (username == null || username.isBlank()) {
             throw new IllegalStateException("SPACETRACK_USERNAME not configured");
@@ -42,17 +42,14 @@ public class SpaceTrackClient {
             throw new IllegalStateException("SPACETRACK_PASSWORD not configured");
         }
 
-        var loginResponse = restClient.post()
+        // retrieve() throws RestClientResponseException on a non-2xx status, so reaching the next line means success
+        restClient.post()
                 .uri(SPACE_TRACK_LOGIN_URL)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .body("identity=" + URLEncoder.encode(username, StandardCharsets.UTF_8) +
                         "&password=" + URLEncoder.encode(password, StandardCharsets.UTF_8))
                 .retrieve()
                 .toBodilessEntity();
-
-        if (!loginResponse.getStatusCode().is2xxSuccessful()) {
-            throw new IOException("Login failed with status: " + loginResponse.getStatusCode());
-        }
 
         log.debug("Successfully authenticated with Space-Track");
     }
@@ -71,14 +68,11 @@ public class SpaceTrackClient {
                 .toEntity(new ParameterizedTypeReference<List<GpRecord>>() {
                 });
 
-        if (response.getStatusCode().isError()) {
-            throw new IOException("Catalog fetch failed with status: " + response.getStatusCode());
-        }
         List<GpRecord> body = response.getBody();
         if (body == null) {
             throw new IOException("Catalog fetch returned no data");
         }
         log.debug("Fetched {} objects from Space-Track", body.size());
-        return response.getBody();
+        return body;
     }
 }

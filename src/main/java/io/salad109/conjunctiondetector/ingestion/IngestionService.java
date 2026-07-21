@@ -74,11 +74,11 @@ public class IngestionService {
                     processingResult.deleted());
 
             eventPublisher.publishEvent(new DataChangedEvent());
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             SyncResult failedSyncResult = new SyncResult(startedAt, 0, 0, 0, 0, 0, false);
             ingestionLogService.saveIngestionLog(failedSyncResult, e.getMessage());
 
-            log.error("Failed synchronizing with Space-Track API", e);
+            throw new IllegalStateException("Failed synchronizing with Space-Track API", e);
         }
     }
 

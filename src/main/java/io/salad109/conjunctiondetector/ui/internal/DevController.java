@@ -2,8 +2,13 @@ package io.salad109.conjunctiondetector.ui.internal;
 
 import io.salad109.conjunctiondetector.conjunction.ConjunctionService;
 import io.salad109.conjunctiondetector.ingestion.IngestionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.NestedExceptionUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -12,12 +17,17 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("dev")
 public class DevController {
 
+    private static final Logger log = LoggerFactory.getLogger(DevController.class);
+
     private final IngestionService ingestionService;
     private final ConjunctionService conjunctionService;
+    private final ScheduleService scheduleService;
 
-    public DevController(IngestionService ingestionService, ConjunctionService conjunctionService) {
+    public DevController(IngestionService ingestionService, ConjunctionService conjunctionService,
+                         ScheduleService scheduleService) {
         this.ingestionService = ingestionService;
         this.conjunctionService = conjunctionService;
+        this.scheduleService = scheduleService;
     }
 
     @PostMapping("/sync")
@@ -35,8 +45,14 @@ public class DevController {
 
     @PostMapping("/sync-and-scan")
     public ResponseEntity<Void> syncAndScan() {
-        ingestionService.sync();
-        conjunctionService.findConjunctions();
+        scheduleService.syncAndScan();
         return ResponseEntity.ok().build();
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleException(RuntimeException e) {
+        String cause = NestedExceptionUtils.getMostSpecificCause(e).getMessage();
+        log.error("Trigger failed: {}", cause);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(cause);
     }
 }
