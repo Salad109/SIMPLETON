@@ -55,7 +55,7 @@ public class UiController {
             double y = (max == min)
                     ? CHART_Y_OFFSET + CHART_HEIGHT / 2.0
                     : CHART_Y_OFFSET + CHART_HEIGHT
-                      - (double) (fn.applyAsLong(logs.get(n - 1 - i)) - min) / (max - min) * CHART_HEIGHT;
+                    - (double) (fn.applyAsLong(logs.get(n - 1 - i)) - min) / (max - min) * CHART_HEIGHT;
             if (i > 0) sb.append(' ');
             sb.append(String.format(Locale.ROOT, "%.1f,%.1f", x, y));
         }

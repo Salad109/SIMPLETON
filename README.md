@@ -29,9 +29,8 @@ pipeline flags both events with 10 and 7 ms TCA accuracy respectively.
 
 ## Why It Matters
 
-Full-catalog screening in under 30 seconds is not the point by itself. Screening accuracy is capped by public TLE
-quality, so out-speeding other screeners on the same data doesn't add anything. The value is what cheap screening
-unlocks.
+Full-catalog screening in under 30 seconds is not the point. Screening accuracy is capped by public TLE quality, 
+so out-speeding other screeners on the same data doesn't add anything. The value is what cheap screening unlocks.
 
 For example, collision-avoidance maneuver planning. Dodging one conjunction can steer a satellite into
 several new ones, so finding a burn that clears the threat without creating worse ones means screening the whole

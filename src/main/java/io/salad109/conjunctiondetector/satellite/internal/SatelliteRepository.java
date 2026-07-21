@@ -32,7 +32,7 @@ public interface SatelliteRepository extends JpaRepository<Satellite, Integer> {
             FROM tokens
             WHERE length(fragment) >= 3
               AND fragment ~ '[A-Z]'
-              AND fragment NOT IN ('OBJECT', 'ASSIGNED', 'TBA')
+              AND fragment NOT IN ('DEB', 'OBJECT', 'ASSIGNED', 'TBA')
             GROUP BY fragment
             ORDER BY count DESC
             LIMIT :limit
