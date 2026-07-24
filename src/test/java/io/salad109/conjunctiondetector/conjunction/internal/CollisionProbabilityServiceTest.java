@@ -2,7 +2,6 @@ package io.salad109.conjunctiondetector.conjunction.internal;
 
 import io.salad109.conjunctiondetector.conjunction.internal.ScanService.RefinedEvent;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
-import io.salad109.conjunctiondetector.satellite.SatelliteScanInfoPair;
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

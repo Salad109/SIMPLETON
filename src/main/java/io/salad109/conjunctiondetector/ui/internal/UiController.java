@@ -24,12 +24,6 @@ public class UiController {
 
     private static final DateTimeFormatter CHART_LABEL_FMT = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
 
-    // SVG plot area inside the 620x110 viewBox in stats.html
-    private static final int CHART_X_OFFSET = 44;
-    private static final int CHART_Y_OFFSET = 8;
-    private static final int CHART_WIDTH = 568;
-    private static final int CHART_HEIGHT = 90;
-
     private final ConjunctionService conjunctionService;
     private final IngestionLogService ingestionLogService;
     private final ScanLogService scanLogService;
@@ -46,18 +40,18 @@ public class UiController {
         this.statsService = statsService;
     }
 
+    // Points span a normalized 0..100 box; the template's nested <svg> maps it onto the plot area.
     private static String svgPoints(List<ScanResult> logs, ToLongFunction<ScanResult> fn, long min, long max) {
         int n = logs.size();
         StringBuilder sb = new StringBuilder();
         // Emit points left-to-right (oldest first). Logs are newest-first, so iterate in reverse.
         for (int i = 0; i < n; i++) {
-            double x = CHART_X_OFFSET + (double) i / (n - 1) * CHART_WIDTH;
+            double x = (double) i / (n - 1) * 100.0;
             double y = (max == min)
-                    ? CHART_Y_OFFSET + CHART_HEIGHT / 2.0
-                    : CHART_Y_OFFSET + CHART_HEIGHT
-                    - (double) (fn.applyAsLong(logs.get(n - 1 - i)) - min) / (max - min) * CHART_HEIGHT;
+                    ? 50.0
+                    : 100.0 - (double) (fn.applyAsLong(logs.get(n - 1 - i)) - min) / (max - min) * 100.0;
             if (i > 0) sb.append(' ');
-            sb.append(String.format(Locale.ROOT, "%.1f,%.1f", x, y));
+            sb.append(String.format(Locale.ROOT, "%.2f,%.2f", x, y));
         }
         return sb.toString();
     }

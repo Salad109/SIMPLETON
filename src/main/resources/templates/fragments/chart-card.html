@@ -1,7 +1,7 @@
 <!--
   fragments/chart-card.html
   A 30-day SVG line+area chart inside a card.
-  Args: title, points (controller-built "x,y x,y ..."), min, max,
+  Args: title, points (controller-built "x,y x,y ..." in a normalized 0..100 box), min, max,
         startLabel, endLabel, gradId (unique per chart), color (CSS var or hex)
 -->
 <div class="card"
@@ -28,10 +28,14 @@
                     <stop offset="100%" stop-opacity="0" th:attr="stop-color=${color}"/>
                 </linearGradient>
             </defs>
-            <polygon th:attr="fill='url(#' + ${gradId} + ')',
-                              points=${'44,98 ' + points + ' 612,98'}"/>
-            <polyline fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                      th:attr="stroke=${color},points=${points}"/>
+            <svg x="44" y="8" width="568" height="90" viewBox="0 0 100 100"
+                 preserveAspectRatio="none" style="overflow:visible">
+                <polygon th:attr="fill='url(#' + ${gradId} + ')',
+                                  points=${'0,100 ' + points + ' 100,100'}"/>
+                <polyline fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                          vector-effect="non-scaling-stroke"
+                          th:attr="stroke=${color},points=${points}"/>
+            </svg>
         </svg>
     </div>
 </div>

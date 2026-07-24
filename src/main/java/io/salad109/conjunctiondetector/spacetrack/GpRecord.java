@@ -59,7 +59,8 @@ public record GpRecord(
                 && epoch != null && epoch.isAfter(epochCutoff)
                 && meanMotion != null && meanMotion.compareTo(BigDecimal.ZERO) > 0
                 && eccentricity != null && eccentricity.compareTo(BigDecimal.ZERO) >= 0
-                && eccentricity.compareTo(new BigDecimal("0.95")) < 0;
+                && eccentricity.compareTo(new BigDecimal("0.95")) < 0
+                && periapsis != null;
     }
 
     /**

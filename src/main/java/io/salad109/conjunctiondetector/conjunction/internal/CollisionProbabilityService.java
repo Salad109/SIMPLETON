@@ -58,7 +58,7 @@ public class CollisionProbabilityService {
     public Conjunction computeProbabilityAndBuild(RefinedEvent event) {
         double pc = 0.0;
 
-        if (event.pvA() != null && event.relativeVelocityMS() > 10.0) {
+        if (event.relativeVelocityMS() > 10.0) {
             try {
                 pc = computePc(event);
             } catch (Exception e) {

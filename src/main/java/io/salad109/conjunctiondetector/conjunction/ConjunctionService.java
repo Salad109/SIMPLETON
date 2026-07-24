@@ -42,7 +42,7 @@ public class ConjunctionService {
     @Value("${conjunction.tolerance-km:72.0}")
     private double toleranceKm;
 
-    @Value("${conjunction.cell-size-km:48.0}")
+    @Value("${conjunction.cell-size-km:55.38}")
     private double cellSizeKm;
 
     @Value("${conjunction.collision-threshold-km:5.0}")
@@ -57,7 +57,7 @@ public class ConjunctionService {
     @Value("${conjunction.interpolation-stride:50}")
     private int interpolationStride;
 
-    @Value("${conjunction.subwindow-count:1}")
+    @Value("${conjunction.subwindow-count:4}")
     private int subwindowCount;
 
     public ConjunctionService(SatelliteService satelliteService,

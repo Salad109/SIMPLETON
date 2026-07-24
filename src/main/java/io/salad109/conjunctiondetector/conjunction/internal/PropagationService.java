@@ -1,7 +1,6 @@
 package io.salad109.conjunctiondetector.conjunction.internal;
 
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
-import io.salad109.conjunctiondetector.satellite.SatelliteScanInfoPair;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
 import org.orekit.frames.Frame;
@@ -88,6 +87,7 @@ public class PropagationService {
                     kvy[s][k] = (float) (pv.getVelocity().getY() / 1000.0);
                     kvz[s][k] = (float) (pv.getVelocity().getZ() / 1000.0);
                 } catch (Exception e) {
+                    log.debug("Failed to propagate NORAD ID {} at knot {}: {}", satIds[s], k, e.getMessage());
                     break; // bad TLE
                 }
             }
@@ -126,7 +126,7 @@ public class PropagationService {
             int numKnots = knots.x[s].length;
 
             for (int k = 0; k < numKnots - 1; k++) {
-                if (Float.isNaN(knots.x[s][k]) || Float.isNaN(knots.x[s][k + 1])) continue;
+                if (Float.isNaN(knots.x[s][k]) || Float.isNaN(knots.x[s][k + 1])) break;
 
                 int stepStart = k * interpolationStride;
                 int stepEnd = Math.min((k + 1) * interpolationStride, totalSteps - 1);
