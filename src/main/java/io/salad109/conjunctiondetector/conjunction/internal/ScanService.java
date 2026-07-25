@@ -187,18 +187,7 @@ public class ScanService {
 
         double t = Math.clamp(-sepDotDelta / deltaSepSq, 0, 1);
 
-        // Compute minimum distSq via discriminant form to avoid catastrophic cancellation.
-        double minDistSq;
-        if (t == 0.0) {
-            minDistSq = distSq0;
-        } else if (t == 1.0) {
-            double sepEndX = sepX + deltaSepX;
-            double sepEndY = sepY + deltaSepY;
-            double sepEndZ = sepZ + deltaSepZ;
-            minDistSq = sepEndX * sepEndX + sepEndY * sepEndY + sepEndZ * sepEndZ;
-        } else {
-            minDistSq = (distSq0 * deltaSepSq - sepDotDelta * sepDotDelta) / deltaSepSq;
-        }
+        double minDistSq = distSq0 + 2 * sepDotDelta * t + deltaSepSq * t * t;
 
         return new double[]{minDistSq, t};
     }
