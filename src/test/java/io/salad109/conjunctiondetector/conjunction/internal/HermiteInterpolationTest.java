@@ -69,6 +69,35 @@ class HermiteInterpolationTest {
     }
 
     @Test
+    void shortFinalIntervalInterpolatesExactly() {
+        // 14 steps with a stride of 5 puts knots on steps 0, 5, 10, 13, so the final interval is short
+        int stride = 5;
+        int totalSteps = 14;
+        long stepNanos = 1_000_000_000L;
+        int[] knotSteps = {0, 5, 10, 13};
+        int numKnots = knotSteps.length;
+
+        float[][] kx = new float[1][numKnots], ky = new float[1][numKnots], kz = new float[1][numKnots];
+        float[][] kvx = new float[1][numKnots], kvy = new float[1][numKnots], kvz = new float[1][numKnots];
+
+        for (int k = 0; k < numKnots; k++) {
+            float t = knotSteps[k] * (stepNanos / 1e9f);
+            kx[0][k] = cubic(t);
+            kvx[0][k] = cubicDeriv(t);
+        }
+
+        KnotCache knots = buildKnots(stride, totalSteps, stepNanos, kx, ky, kz, kvx, kvy, kvz);
+        PositionCache result = propagationService.interpolate(knots);
+
+        // Exact only if the tangents scale by the real interval length; a stride-length dt puts step 12 ~29 off
+        for (int step = 0; step < totalSteps; step++) {
+            float t = step * (stepNanos / 1e9f);
+            assertThat(result.x()[0][step]).as("x at step " + step)
+                    .isCloseTo(cubic(t), offset(0.01f));
+        }
+    }
+
+    @Test
     void velocityMismatchCausesDeviationFromLinear() {
         // Zero velocity at both knots forces an S-curve; a linear-only impl would return 25 at quarter-step.
         int stride = 8;

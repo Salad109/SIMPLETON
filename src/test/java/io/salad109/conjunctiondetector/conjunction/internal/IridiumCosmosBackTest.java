@@ -50,6 +50,16 @@ class IridiumCosmosBackTest {
         }
     }
 
+    private static SatelliteScanInfo iridium() {
+        return new SatelliteScanInfo(24946, IRIDIUM_TLE1, IRIDIUM_TLE2,
+                OffsetDateTime.of(2009, 2, 9, 18, 49, 39, 0, ZoneOffset.UTC), 780.0, "PAYLOAD");
+    }
+
+    private static SatelliteScanInfo cosmos() {
+        return new SatelliteScanInfo(22675, COSMOS_TLE1, COSMOS_TLE2,
+                OffsetDateTime.of(2009, 2, 9, 11, 57, 36, 0, ZoneOffset.UTC), 780.0, "PAYLOAD");
+    }
+
     @Test
     void sgp4FindsCloseApproachAtCollisionTime() {
 
@@ -84,15 +94,7 @@ class IridiumCosmosBackTest {
         int interpolationStride = 50;
         double thresholdKm = 5.0;
 
-        OffsetDateTime iridiumEpoch = OffsetDateTime.of(2009, 2, 9, 18, 49, 39, 0, ZoneOffset.UTC);
-        OffsetDateTime cosmosEpoch = OffsetDateTime.of(2009, 2, 9, 11, 57, 36, 0, ZoneOffset.UTC);
-
-        SatelliteScanInfo iridium = new SatelliteScanInfo(24946, IRIDIUM_TLE1, IRIDIUM_TLE2,
-                iridiumEpoch, 780.0, "PAYLOAD");
-        SatelliteScanInfo cosmos = new SatelliteScanInfo(22675, COSMOS_TLE1, COSMOS_TLE2,
-                cosmosEpoch, 780.0, "PAYLOAD");
-
-        List<SatelliteScanInfo> satellites = List.of(iridium, cosmos);
+        List<SatelliteScanInfo> satellites = List.of(iridium(), cosmos());
         Map<Integer, TLEPropagator> propagators = propagationService.buildPropagators(satellites);
 
         // Propagate and interpolate
@@ -146,5 +148,36 @@ class IridiumCosmosBackTest {
                 .isEqualTo(22675);
         assertThat(conjunction.getObject2NoradId())
                 .isEqualTo(24946);
+    }
+
+    @Test
+    void detectsCollisionPastTheLastKnot() {
+
+        double toleranceKm = 72.0;
+        double cellSizeKm = 48.0;
+        double stepSeconds = 9;
+        int interpolationStride = 50;
+        double thresholdKm = 5.0;
+
+        // 411 steps with a stride of 50 leaves the last knot at step 400, and the collision falls at step 405.
+        OffsetDateTime startTime = COLLISION_TIME.minusSeconds(3645);
+        OffsetDateTime endTime = startTime.plusSeconds(3690);
+
+        List<SatelliteScanInfo> satellites = List.of(iridium(), cosmos());
+        Map<Integer, TLEPropagator> propagators = propagationService.buildPropagators(satellites);
+
+        PropagationService.KnotCache knots = propagationService.computeKnots(
+                propagators, startTime, endTime, stepSeconds, interpolationStride);
+        PropagationService.PositionCache cache = propagationService.interpolate(knots);
+
+        List<ScanService.CoarseDetection> detections = scanService.checkPairs(
+                satellites, cache, toleranceKm, cellSizeKm);
+        List<ScanService.CoarseDetection> events = scanService.groupAndReduce(detections);
+        List<ScanService.RefinedEvent> refined = scanService.refine(
+                events, cache, propagators, stepSeconds, thresholdKm);
+
+        assertThat(refined)
+                .as("the collision sits past the last knot and should still be refined")
+                .isNotEmpty();
     }
 }

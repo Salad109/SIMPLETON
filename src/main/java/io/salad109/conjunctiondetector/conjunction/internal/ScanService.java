@@ -123,8 +123,7 @@ public class ScanService {
         int bestIntervalStart = step;
 
         // Check interval (step-1, step)
-        if (step > 0 && cache.isValid(idxA, step - 1) && cache.isValid(idxB, step - 1)
-                && cache.isValid(idxA, step) && cache.isValid(idxB, step)) {
+        if (step > 0 && cache.isValid(idxA, step - 1) && cache.isValid(idxB, step - 1)) {
             double[] result = analyticalMin(cache, idxA, idxB, step - 1, step);
             if (result[0] < bestDistSq) {
                 bestDistSq = result[0];
@@ -134,8 +133,7 @@ public class ScanService {
         }
 
         // Check interval (step, step+1)
-        if (step < totalSteps - 1 && cache.isValid(idxA, step) && cache.isValid(idxB, step)
-                && cache.isValid(idxA, step + 1) && cache.isValid(idxB, step + 1)) {
+        if (step < totalSteps - 1 && cache.isValid(idxA, step + 1) && cache.isValid(idxB, step + 1)) {
             double[] result = analyticalMin(cache, idxA, idxB, step, step + 1);
             if (result[0] < bestDistSq) {
                 bestDistSq = result[0];

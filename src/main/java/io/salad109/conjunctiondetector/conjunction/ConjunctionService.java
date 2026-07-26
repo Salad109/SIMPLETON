@@ -78,8 +78,8 @@ public class ConjunctionService {
         this.clock = clock;
     }
 
-    @PostConstruct
-    void validateProperties() {
+    static void validate(double toleranceKm, double cellSizeKm, double thresholdKm, int lookaheadHours,
+                         double stepSeconds, int interpolationStride, int subwindowCount) {
         if (toleranceKm <= 0) throw new IllegalStateException("conjunction.tolerance-km must be positive");
         if (cellSizeKm <= 0) throw new IllegalStateException("conjunction.cell-size-km must be positive");
         if (thresholdKm <= 0) throw new IllegalStateException("conjunction.collision-threshold-km must be positive");
@@ -88,6 +88,20 @@ public class ConjunctionService {
         if (interpolationStride <= 0)
             throw new IllegalStateException("conjunction.interpolation-stride must be positive");
         if (subwindowCount <= 0) throw new IllegalStateException("conjunction.subwindow-count must be positive");
+
+        // A subwindow boundary that falls between two steps leaves a sliver of the window unscanned
+        double stepsPerSubwindow = lookaheadHours * 3600.0 / subwindowCount / stepSeconds;
+        boolean wholeSteps = Math.abs(stepsPerSubwindow - Math.round(stepsPerSubwindow)) < 1e-6;
+        if (stepsPerSubwindow < 1 || !wholeSteps)
+            throw new IllegalStateException(
+                    "conjunction.subwindow-count must split the look-ahead window into whole steps, got "
+                            + stepsPerSubwindow);
+    }
+
+    @PostConstruct
+    void validateProperties() {
+        validate(toleranceKm, cellSizeKm, thresholdKm, lookaheadHours, stepSeconds, interpolationStride,
+                subwindowCount);
     }
 
     @Transactional(readOnly = true)

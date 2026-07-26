@@ -59,7 +59,8 @@ public class PropagationService {
         }
 
         int numSats = satIds.length;
-        int numKnots = (totalSteps - 1) / interpolationStride + 1;
+        // Round up so the last knot lands on the final step, leaving no tail
+        int numKnots = (totalSteps - 2 + interpolationStride) / interpolationStride + 1;
 
         float[][] kx = new float[numSats][numKnots];
         float[][] ky = new float[numSats][numKnots];
@@ -76,8 +77,7 @@ public class PropagationService {
             TLEPropagator prop = propagators.get(satIds[s]);
 
             for (int k = 0; k < numKnots; k++) {
-                int step = k * interpolationStride;
-                if (step >= totalSteps) break;
+                int step = Math.min(k * interpolationStride, totalSteps - 1);
                 try {
                     PVCoordinates pv = prop.getPVCoordinates(toAbsoluteDate(times[step]), prop.getFrame());
                     kx[s][k] = (float) (pv.getPosition().getX() / 1000.0);
@@ -106,13 +106,11 @@ public class PropagationService {
         int totalSteps = knots.times.length;
         int interpolationStride = knots.interpolationStride;
 
-        if (interpolationStride == 1) {
-            // No interpolation
+        if (interpolationStride == 1 || totalSteps == 1) {
+            // No interpolation, the knots cover every step
             return new PositionCache(knots.noradIdToArrayId, knots.arrayIdToNoradId, knots.times,
                     knots.x, knots.y, knots.z);
         }
-
-        float dt = (float) (knots.stepNanos * interpolationStride / 1e9); // seconds between knots
 
         float[][] x = new float[numSats][totalSteps];
         float[][] y = new float[numSats][totalSteps];
@@ -130,6 +128,7 @@ public class PropagationService {
 
                 int stepStart = k * interpolationStride;
                 int stepEnd = Math.min((k + 1) * interpolationStride, totalSteps - 1);
+                float intervalSeconds = (float) (knots.stepNanos * (stepEnd - stepStart) / 1e9);
 
                 x[s][stepStart] = knots.x[s][k];
                 y[s][stepStart] = knots.y[s][k];
@@ -149,9 +148,12 @@ public class PropagationService {
                     float h01 = -2 * t3 + 3 * t2;      // p1
                     float h11 = t3 - t2;                // v1
 
-                    x[s][step] = h00 * knots.x[s][k] + h10 * knots.vx[s][k] * dt + h01 * knots.x[s][k + 1] + h11 * knots.vx[s][k + 1] * dt;
-                    y[s][step] = h00 * knots.y[s][k] + h10 * knots.vy[s][k] * dt + h01 * knots.y[s][k + 1] + h11 * knots.vy[s][k + 1] * dt;
-                    z[s][step] = h00 * knots.z[s][k] + h10 * knots.vz[s][k] * dt + h01 * knots.z[s][k + 1] + h11 * knots.vz[s][k + 1] * dt;
+                    x[s][step] = h00 * knots.x[s][k] + h10 * knots.vx[s][k] * intervalSeconds
+                            + h01 * knots.x[s][k + 1] + h11 * knots.vx[s][k + 1] * intervalSeconds;
+                    y[s][step] = h00 * knots.y[s][k] + h10 * knots.vy[s][k] * intervalSeconds
+                            + h01 * knots.y[s][k + 1] + h11 * knots.vy[s][k + 1] * intervalSeconds;
+                    z[s][step] = h00 * knots.z[s][k] + h10 * knots.vz[s][k] * intervalSeconds
+                            + h01 * knots.z[s][k + 1] + h11 * knots.vz[s][k + 1] * intervalSeconds;
                 }
             }
         });
