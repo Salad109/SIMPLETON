@@ -11,10 +11,6 @@ for f in csv_files:
 gc_names = list(dfs.keys())
 gc_colors = ['#2E86AB', '#D62839', '#06A77D', '#F77F00'][:len(gc_names)]
 
-timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
-stack_colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']
-stack_labels = ['Propagator Build', 'SGP4', 'Interpolation', 'Check Pairs', 'Grouping', 'Refine', 'Probability']
-
 # Print table
 print(f"| {'GC':<12} | Mean Time | Std Dev | Min    | Max    | Conjunctions |")
 print(f"|{'-'*14}|-----------|---------|--------|--------|--------------|")
@@ -22,6 +18,10 @@ for name in gc_names:
     df = dfs[name]
     print(f"| {name:<12} | {df['total_s'].mean():>8.2f}s | {df['total_s'].std():>6.2f}s "
           f"| {df['total_s'].min():>5.2f}s | {df['total_s'].max():>5.2f}s | {int(df['conj'].mean()):>12} |")
+
+timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
+colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']
+labels = ['Propagator Build', 'SGP4', 'Interpolation', 'Check Pairs', 'Grouping', 'Refine', 'Probability']
 
 # Plot 1 - Total time: box plot (left) + mean bar (right)
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
@@ -56,7 +56,7 @@ n_gc = len(gc_names)
 n_cols = len(timing_columns)
 width = 0.8 / n_cols
 x = range(n_gc)
-for i, (col, color, label) in enumerate(zip(timing_columns, stack_colors, stack_labels)):
+for i, (col, color, label) in enumerate(zip(timing_columns, colors, labels)):
     vals = [dfs[name][col].mean() for name in gc_names]
     offset = (i - n_cols / 2 + 0.5) * width
     ax.bar([xi + offset for xi in x], vals, width, color=color, label=label, alpha=0.8)
@@ -64,7 +64,7 @@ ax.set_xticks(x)
 ax.set_xticklabels(gc_names)
 ax.set_ylabel('Time (s)', fontsize=12)
 ax.set_title('Mean Time Breakdown by GC', fontsize=14, fontweight='bold')
-ax.legend(fontsize=8, loc='upper left', ncol=2)
+ax.legend(fontsize=10, loc='upper left', ncol=2)
 ax.grid(True, alpha=0.3, axis='y')
 plt.tight_layout()
 plt.savefig('2_time_breakdown.png', dpi=300, bbox_inches='tight')

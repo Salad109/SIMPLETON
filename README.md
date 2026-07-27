@@ -101,7 +101,7 @@ compound in complex ways when combined, so the Pareto analysis sweeps all parame
 |---|-------------------------------------------------------|----------------------------------------------------|
 | 1 | [Step Ratio](docs/1-step-ratio)                       | Time step size                                     |
 | 2 | [Interpolation Stride](docs/2-interpolation-stride)   | SGP4 calls per time step via interpolation spacing |
-| 3 | [Cell Size Ratio](docs/3-cell-size-ratio)             | Spatial grid cell size                             |
+| 3 | [Cell Ratio](docs/3-cell-ratio)                       | Spatial grid cell size                             |
 | 4 | [Conjunction Tolerance](docs/4-conjunction-tolerance) | Coarse scan distance threshold in km               |
 | 5 | [Pareto Frontier](docs/5-pareto-frontier)             | All parameters simultaneously                      |
 | 6 | [Garbage Collector](docs/6-gc)                        | GC impact on pipeline throughput                   |

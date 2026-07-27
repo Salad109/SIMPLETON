@@ -1,11 +1,11 @@
 # Garbage Collector Comparison
 
-Each GC runs the same fixed-parameter conjunction pipeline 10 times to measure throughput variance.
+Each GC runs the same fixed-parameter conjunction pipeline 10 times to measure throughput difference.
 
 ## Parameters
 
 - **tolerance-km**: Fixed at 72 km
-- **step-second-ratio**: Fixed at 8
+- **step-ratio**: Fixed at 8
 - **interpolation-stride**: Fixed at 50
 - **cell-ratio**: Fixed at 1.30
 - **lookahead-hours**: Fixed at 24

@@ -1,15 +1,15 @@
 # SOCRATES Comparison
 
-Validate the pipeline against CelesTrak's SOCRATES Plus by running both on the same TLE catalog state over the same
-window, then measure agreement at the event level.
+The pipeline was validated against CelesTrak's SOCRATES Plus by running both on the same TLE catalog state over the same
+window, then measuring agreement at the event level.
 
 ## Methodology
 
 ### Reference run
 
-SOCRATES Plus catalog generated 2026-05-10 07:02 UTC, computation interval start 2026-05-09 19:00 UTC, 7-day
-lookahead, 5 km miss-distance threshold. CelesTrak generates this list twice daily by propagating the active-payload
-primary set against the full Space-Track catalog with SGP4/STK-CAT and publishes the result as
+SOCRATES Plus catalog generated 2026-05-10 07:02 UTC, computation interval start 2026-05-09 19:00 UTC, 7-day lookahead,
+5 km miss-distance threshold. CelesTrak generates this list twice daily by propagating the active-payload primary set
+against the full Space-Track catalog with SGP4/STK-CAT and publishes the result as
 `sort-minRange.csv`.
 
 ### TLE catalog reconstruction
@@ -17,15 +17,15 @@ primary set against the full Space-Track catalog with SGP4/STK-CAT and publishes
 The dominant source of disagreement between two independent SGP4 implementations is the input. To eliminate that
 variable we replicate SOCRATES's TLE set exactly:
 
-1. `socrates.csv` carries `DSE_1` and `DSE_2` (days since each side's TLE epoch) for every conjunction. For each
-   NORAD that appears in any row, compute target TLE epoch as `TCA - DSE days`.
+1. `socrates.csv` carries `DSE_1` and `DSE_2` (days since each side's TLE epoch) for every conjunction. For each NORAD
+   that appears in any row, compute target TLE epoch as `TCA - DSE days`.
 2. `socrates-catalog-sync.py` pulls Space-Track `gp_history` in over a 30-day window ending at 2026-05-09 19:00 UTC.
 3. For each NORAD, pick the `gp_history` row whose EPOCH is closest to the target within 60 s.
 4. Write the result to CSV and load it into the local Postgres `satellite` table via
    `TRUNCATE satellite CASCADE; \copy satellite FROM ...`.
 
-The resulting `satellite` table is per-satellite TLE-identical with SOCRATES for every conjunction-producing
-satellite. Any disagreement after this point is caused by the propagator, screening, or filter mismatch.
+The resulting `satellite` table is per-satellite TLE-identical with SOCRATES for every conjunction-producing satellite.
+Any disagreement after this point is caused by the propagator, screening, or filter mismatch.
 
 ### Our screening run
 
@@ -37,26 +37,23 @@ from the reconstructed `satellite` table. The 5 km refinement output is dumped t
 SOCRATES Plus specifies what counts as a reportable conjunction. We apply the same rules to both catalogs before
 matching:
 
-- **Primary-vs-all.** SOCRATES screens active payloads against the full catalog. We keep only events where at least
-  one NORAD is in CelesTrak's `active.txt` - the closest public proxy for SOCRATES's curated primary list.
-- **Intra-fleet exclusion.** SOCRATES drops conjunctions where both satellites are fully operational members of the
-  same constellation. The fleet list (Starlink, OneWeb, Kuiper, Qianfan, Hulianwang, Geesat) was reverse-engineered
-  from the comparison itself: skip the intra-fleet filter on both sides, look at same-name-prefix pairs that appear
-  in our output but not SOCRATES's, and any prefix with a non-trivial signal goes in the list. We map each NORAD to
-  a constellation label via regex on `OBJECT_NAME` (`satellite_names.csv`), then drop events where both NORADs are
-  in `active.txt` AND share a fleet.
-- **Formation-flight exclusion.** Drop events with relative velocity below 10 m/s on either side. Formation-flying
-  pairs produce hundreds of SOCRATES events per pair while our pipeline clusters all consecutive close-approach
-  detections into a single event. That's a design difference, not a physical disagreement, and it inflates the
-  apparent recall gap. 10 m/s is the same threshold the pipeline already uses internally to skip collision probability
-  computation.
+- **Primary-vs-all.** SOCRATES screens active payloads against the full catalog. We keep only events where at least one
+  NORAD is in CelesTrak's `active.txt` - the closest public proxy for SOCRATES's curated primary list.
+- **Intra-fleet exclusion.** SOCRATES drops conjunctions where both satellites are fully operational members of the same
+  constellation. The fleet list (Starlink, OneWeb, Kuiper, Qianfan, Hulianwang, Geesat) was reverse-engineered from the
+  comparison itself: skip the intra-fleet filter on both sides, look at same-name-prefix pairs that appear in our output
+  but not SOCRATES's, and any prefix with a non-trivial signal goes in the list. We map each NORAD to a constellation
+  label via regex on `OBJECT_NAME` (`satellite_names.csv`), then drop events where both NORADs are in `active.txt` AND
+  share a fleet.
+- **Formation-flight exclusion.** Drop events with relative velocity below 10 m/s on either side. Formation-flying pairs
+  produce hundreds of SOCRATES events per pair while our pipeline clusters all consecutive close-approach detections
+  into a single event. That's a design difference, not a physical disagreement, and it overstates the number of events
+  we miss. 10 m/s is the same threshold the pipeline already uses internally to skip collision probability computation.
 
 ### Event matching
 
-A conjunction is between two satellites. Two events match if they involve the same pair of satellites and their
-times of closest approach are within 1 minute of each other.
-
-## Headline
+A conjunction is between two satellites. Two events match if they involve the same pair of satellites and their times of
+closest approach are within 1 minute of each other.
 
 | Events                                   |   Count |                                         |
 |------------------------------------------|--------:|----------------------------------------:|
@@ -80,7 +77,7 @@ TCA agrees to **9 ms** and miss distance to **5 m** at p95.
 
 ![ΔTCA and Δmiss-distance error distributions](1_errors.png)
 
-## No decay across the prediction window
+## Agreement across the prediction window
 
 | Day | SOCRATES |   Ours | Matched | % of ours SOCRATES flagged | % of SOCRATES we flagged |
 |----:|---------:|-------:|--------:|---------------------------:|-------------------------:|
@@ -100,21 +97,23 @@ Agreement is flat at 99.5%+ across all seven days.
 
 335 SOCRATES events have no match in our catalog, and 385 of our events aren't present in SOCRATES's. The histograms
 plot their SOCRATES-reported miss distance and relative velocity. The spike against the 5 km wall is the
-boundary-disagreement bucket: SOCRATES says just under 5 km, our system says just over, and the event is skipped.
-The velocity panel shows a second spike near zero: 101 missed events sit below 340 m/s, a long tail of slow co-orbiting
+boundary-disagreement bucket: SOCRATES says just under 5 km, our system says just over, and the event is skipped. The
+velocity panel shows a second spike near zero: 101 missed events sit below 340 m/s, a long tail of slow co-orbiting
 pairs that survived the 10 m/s formation-flight filter.
 
 SOCRATES uses a hand-curated list for both primary-vs-all screening and intra-fleet exclusion; their provided
 `active.txt` is a broader proxy that retains decommissioned constellation members SOCRATES itself treats as non-primary.
-Proof: `socrates.csv` itself contains ~10k Starlink-Starlink and ~750 OneWeb-OneWeb conjunctions. If their rule
-were "drop all same-fleet pairs" those counts would be zero. Therefore, the survivors must be pairs where at least one
-side is a decommissioned constellation member SOCRATES no longer treats as primary. That sub-list isn't public.
+Proof: `socrates.csv` itself contains ~10k Starlink-Starlink and ~750 OneWeb-OneWeb conjunctions. If their rule were
+"drop all same-fleet pairs" those counts would be zero. Therefore, the survivors must be pairs where at least one side
+is a decommissioned constellation member SOCRATES no longer treats as primary. That sub-list isn't public.
 
 ## Inputs (regenerable)
 
 - socrates.csv: https://celestrak.org/SOCRATES/sort-minRange.csv
-- satellite table: `python3 docs/8-socrates-comparison/socrates-catalog-sync.py` (reconstructs SOCRATES's TLE set
-  from socrates.csv's DSE columns, pulls those exact TLEs from Space-Track, loads into Postgres)
+- satellite table: `python3 docs/8-socrates-comparison/socrates-catalog-sync.py` (reconstructs SOCRATES's TLE set from
+  socrates.csv's DSE columns, pulls those exact TLEs from Space-Track, loads into Postgres)
 - ours.csv: `./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-socrates`
 - active.txt: https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
 - satellite_names.csv: `\copy (select norad_cat_id, object_name from satellite) to stdout csv header`
+
+TODO RERUN WITHOUT SUBWINDOWING

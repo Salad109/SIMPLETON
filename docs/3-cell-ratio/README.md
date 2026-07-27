@@ -1,14 +1,14 @@
-# Cell Size Ratio Sweep
+# Cell Ratio Sweep
 
 The spatial grid divides 3D space into cubic cells for neighbor lookup. `cell_size_km = tolerance_km / cell_ratio`.
-Smaller cells mean fewer satellites per cell, so each satellite has fewer candidates to check against. But
-if cells are too small relative to the tolerance, two satellites within tolerance can end up in non-adjacent cells and
-never get compared. The sweep finds where that tradeoff breaks.
+Smaller cells mean fewer satellites per cell, so each satellite has fewer candidates to check against. But if cells are
+too small relative to the tolerance, two satellites within tolerance can end up in non-adjacent cells and never get
+compared. The sweep finds where that tradeoff breaks.
 
 ## Parameters
 
 - **tolerance-km**: Fixed at 72 km
-- **step-second-ratio**: Fixed at 10
+- **step-ratio**: Fixed at 10
 - **interpolation-stride**: Fixed at 5
 - **lookahead-hours**: Fixed at 24
 - **threshold-km**: Fixed at 5.0 km

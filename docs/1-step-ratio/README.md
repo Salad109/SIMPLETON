@@ -1,8 +1,8 @@
-# Step Second Ratio Sweep
+# Step Ratio Sweep
 
-The step second ratio determines the coarse scan time step: `step_seconds = tolerance_km / ratio`. Higher ratio means
-smaller steps (more SGP4 calls, slower). Lower ratio means larger steps (faster but high velocity conjunctions between
-steps can be missed). With maximum relative velocity of 15 km/s between satellites, the theoretical safe step is
+The step ratio determines the coarse scan time step: `step_seconds = tolerance_km / ratio`. Higher ratio means smaller
+steps (more SGP4 calls, slower). Lower ratio means larger steps (faster but high velocity conjunctions between steps can
+be missed). With maximum relative velocity of 15 km/s between satellites, the theoretical safe step is
 `tolerance_km / 15 km/s = 72 km / 15 km/s = 4.8 s` (ratio=15).
 
 ## Parameters
@@ -12,7 +12,7 @@ steps can be missed). With maximum relative velocity of 15 km/s between satellit
 - **interpolation-stride**: Fixed at 5
 - **lookahead-hours**: Fixed at 24
 - **threshold-km**: Fixed at 5.0 km
-- **step-second-ratio**: Swept 6-15
+- **step-ratio**: Swept 6-15
 - **iterations**: 5 per configuration
 
 ## Results

@@ -8,7 +8,7 @@ interpolation using position + velocity at each knot point.
 
 - **tolerance-km**: Fixed at 72 km
 - **cell-ratio**: Fixed at 1.30
-- **step-second-ratio**: Fixed at 10
+- **step-ratio**: Fixed at 10
 - **lookahead-hours**: Fixed at 24
 - **threshold-km**: Fixed at 5.0 km
 - **interpolation-stride**: Swept 1-125

@@ -7,11 +7,9 @@ import re
 import sys
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 HERE = Path(__file__).resolve().parent
 TCA_TOL_SEC = 60.0
@@ -121,20 +119,20 @@ def plot_error_histograms(matched, path):
     if matched.empty:
         return
     specs = [
-        (matched["delta_tca_sec"], "TCA error (ours - SOCRATES)", "ΔTCA [s]"),
-        (matched["delta_miss_km"], "Miss-distance error (ours - SOCRATES)", "Δmiss distance [km]"),
+        (matched["delta_tca_sec"], "TCA Error (Ours - SOCRATES)", "ΔTCA (s)"),
+        (matched["delta_miss_km"], "Miss-Distance Error (Ours - SOCRATES)", "ΔMiss Distance (km)"),
     ]
     fig, axes = plt.subplots(2, 1, figsize=(9, 9))
     for ax, (values, title, xlabel) in zip(axes, specs):
         lo, hi = values.quantile(0.01), values.quantile(0.99)
         ax.hist(values.clip(lo, hi), bins=80, color="#2ca02c", edgecolor="black", linewidth=0.3)
         ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
-        ax.set_xlabel(xlabel)
-        ax.set_ylabel("Matched events")
-        ax.set_title(title)
+        ax.set_xlabel(xlabel, fontsize=12)
+        ax.set_ylabel("Matched Events", fontsize=12)
+        ax.set_title(title, fontsize=14, fontweight="bold")
         ax.grid(True, alpha=0.3)
     fig.tight_layout()
-    fig.savefig(path, dpi=120)
+    fig.savefig(path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -220,24 +218,24 @@ def plot_missed_miss_distance(missed, path):
 
     ax1.hist(missed["miss_distance_km"], bins=50, range=(0, 5),
              color="#D62839", edgecolor="black", linewidth=0.3)
-    ax1.set_xlabel("SOCRATES miss distance [km]", fontsize=12)
+    ax1.set_xlabel("SOCRATES Miss Distance (km)", fontsize=12)
     ax1.set_ylabel("Events", fontsize=12)
-    ax1.set_title("By reported miss distance", fontsize=13, fontweight="bold")
+    ax1.set_title("By Reported Miss Distance", fontsize=12, fontweight="bold")
     ax1.set_xlim(0, 5)
     ax1.grid(True, alpha=0.3)
 
     vel_hi = max(15.0, float(missed["relative_speed_km_s"].max()))
     ax2.hist(missed["relative_speed_km_s"], bins=50, range=(0, vel_hi),
              color="#2A6F97", edgecolor="black", linewidth=0.3)
-    ax2.set_xlabel("SOCRATES relative velocity [km/s]", fontsize=12)
+    ax2.set_xlabel("SOCRATES Relative Velocity (km/s)", fontsize=12)
     ax2.set_ylabel("Events", fontsize=12)
-    ax2.set_title("By reported relative velocity", fontsize=13, fontweight="bold")
+    ax2.set_title("By Reported Relative Velocity", fontsize=12, fontweight="bold")
     ax2.set_xlim(0, vel_hi)
     ax2.grid(True, alpha=0.3)
 
-    fig.suptitle("SOCRATES events we missed", fontsize=14, fontweight="bold")
+    fig.suptitle("SOCRATES Events We Missed", fontsize=14, fontweight="bold")
     fig.tight_layout()
-    fig.savefig(path, dpi=150, bbox_inches="tight")
+    fig.savefig(path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 
 

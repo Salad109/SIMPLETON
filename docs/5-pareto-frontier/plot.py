@@ -1,6 +1,5 @@
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -39,6 +38,10 @@ for _, row in frontier.iterrows():
           f"| {int(row['conj']):>5} | {int(row['matched']):>7} | {int(row['ours_only']):>9} "
           f"| {int(row['safe_only']):>9} | {row['jaccard']:>7.4f} | {row['coverage']:>8.4f} "
           f"| {row['fabrication']:>11.4f} | {row['total_s']:>5.2f}s |")
+
+timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
+colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']
+labels = ['Propagator Build', 'SGP4', 'Interpolation', 'Check Pairs', 'Grouping', 'Refine', 'Probability']
 
 # Plot 1 - Jaccard vs Time scatter with Pareto frontier
 fig, ax = plt.subplots(figsize=(12, 7))
@@ -82,7 +85,7 @@ ax1.grid(True, alpha=0.3)
 ax1.invert_xaxis()
 
 ax2.plot(f['jaccard'], f['interp_stride'], 'o-', color='#e377c2', markersize=8, linewidth=2)
-ax2.set_ylabel('Interp Stride', fontsize=12)
+ax2.set_ylabel('Interpolation Stride', fontsize=12)
 ax2.grid(True, alpha=0.3)
 ax2.invert_xaxis()
 
@@ -99,23 +102,18 @@ plt.tight_layout()
 plt.savefig('2_frontier_parameters.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
-stack_colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']
-stack_labels = ['Propagator Build', 'SGP4', 'Interpolation', 'Check Pairs', 'Grouping', 'Refine', 'Probability']
-markers = ['^', 'd', 'D', 'x', 'v', 'p', '*']
-
-x_jac = f['jaccard'].values
-
 # Plot 3 - Line per component along Pareto frontier
+markers = ['^', 'd', 'D', 'x', 'v', 'p', '*']
+x_jac = f['jaccard'].values
 fig, ax = plt.subplots(figsize=(12, 7))
-for col, color, marker, label in zip(timing_columns, stack_colors, markers, stack_labels):
+for col, color, marker, label in zip(timing_columns, colors, markers, labels):
     ax.plot(x_jac, f[col], marker=marker, linestyle='-', label=label,
             color=color, linewidth=2, markersize=8)
 ax.invert_xaxis()
 ax.set_xlabel('Jaccard Index', fontsize=12)
 ax.set_ylabel('Time (s)', fontsize=12)
 ax.set_title('Pareto Frontier: Time Breakdown', fontsize=14, fontweight='bold')
-ax.legend(fontsize=8, ncol=2)
+ax.legend(fontsize=10, ncol=2)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig('3_time_breakdown.png', dpi=300, bbox_inches='tight')
@@ -124,11 +122,11 @@ plt.close()
 # Plot 4 - Stacked area along Pareto frontier
 fig, ax = plt.subplots(figsize=(12, 7))
 y_stack = np.vstack([f[col].values for col in timing_columns])
-ax.stackplot(x_jac, y_stack, labels=stack_labels, colors=stack_colors, alpha=0.8)
+ax.stackplot(x_jac, y_stack, labels=labels, colors=colors, alpha=0.8)
 ax.invert_xaxis()
 ax.set_xlabel('Jaccard Index', fontsize=12)
 ax.set_ylabel('Time (s)', fontsize=12)
-ax.set_title('Pareto Frontier: Time Breakdown (Stacked)', fontsize=14, fontweight='bold')
+ax.set_title('Pareto Frontier: Time Breakdown Stacked', fontsize=14, fontweight='bold')
 ax.legend(fontsize=8, loc='upper left', ncol=2)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
@@ -165,19 +163,15 @@ for idx, sr in enumerate(valid_step_ratios):
                            cell_ratios[0] - 0.05, cell_ratios[-1] + 0.05))
     ax.set_xticks(strides[::2])
     ax.set_yticks(cell_ratios[::2])
-    ax.set_xlabel('Interp Stride')
-    ax.set_ylabel('Cell Ratio')
+    ax.set_xlabel('Interpolation Stride', fontsize=12)
+    ax.set_ylabel('Cell Ratio', fontsize=12)
     ax.set_title(f'step_ratio = {sr}', fontsize=12, fontweight='bold')
 
 for idx in range(n, nrows * ncols):
     axes[idx // ncols][idx % ncols].axis('off')
 
 cbar = fig.colorbar(im, ax=axes, shrink=0.85, pad=0.02, extend='min')
-cbar.set_label(f'Jaccard')
-fig.suptitle('Parameter-space accuracy: where the algorithm cliffs',
-             fontsize=14, fontweight='bold')
+cbar.set_label('Jaccard')
+fig.suptitle('Jaccard Index Across Parameter Space', fontsize=14, fontweight='bold')
 plt.savefig('5_parameter_heatmap.png', dpi=300, bbox_inches='tight')
 plt.close()
-
-print(f"\nPlots saved: 1_pareto_frontier.png, 2_frontier_parameters.png, "
-      f"3_time_breakdown.png, 4_time_breakdown_stacked.png, 5_parameter_heatmap.png")

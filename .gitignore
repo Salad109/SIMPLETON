@@ -10,6 +10,7 @@ stuff/
 docs/8-socrates-comparison/*.csv
 docs/8-socrates-comparison/active.txt
 docs/8-socrates-comparison/.cache/
+docs/8-socrates-comparison/__pycache__/
 thesis/
 
 ### STS ###

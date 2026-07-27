@@ -91,7 +91,7 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
                 results.addAll(runIterations(satellites,
                         new ScanParams(TOLERANCE_KM, DEFAULT_STEP_RATIO, DEFAULT_STRIDE, cellRatio), ITERATIONS));
             }
-            writeCsv(results, Paths.get("docs", "3-cell-size-ratio", "conjunction_benchmark.csv"));
+            writeCsv(results, Paths.get("docs", "3-cell-ratio", "conjunction_benchmark.csv"));
         }
 
         log.info("");

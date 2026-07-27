@@ -10,7 +10,7 @@ accuracy when all three are changed together. The losses interact and compound i
 - 30100-object catalog, 24 h lookahead, 72 km tolerance, 5 km collision threshold
 - 3 iterations per config, median time
 - Safe baseline: stepRatio=9, stride=20, cellRatio=0.9 (finest grid in the sweep)
-- Knobs grown looser until Jaccard drops below 0.98, then pruned. 348 configs, 310 above the cutoff.
+- Knobs loosened until Jaccard drops below 0.98, then pruned.
 
 ## Accuracy metric
 
@@ -40,14 +40,14 @@ Each candidate's refined events are matched against the safe baseline by NORAD I
 
 Bold row is the production operating point: 23.74 s @ Jaccard=0.9986, 1.3x faster than the safe baseline.
 
-## Fabrication stays at zero
+## Fabrication
 
-Across the entire frontier, `ours_only` never exceeds 2 events out of ~43k. Stage 4 refinement's final SGP4 + 5 km
-filter drops anything that doesn't actually pass close, so loosening the knobs only ever drops real events -- it never
-invents them. Failure mode is silent under-reporting, not false alarms.
+`ours_only` never exceeds 2 events out of ~43k. Stage 4 propagates real SGP4 at the analytical TCA and drops anything
+past 5 km, so nothing emitted is fake: those 2 are real approaches that missed the baseline's pair + 60 s TCA match.
+Loosening the knobs makes us miss real events, never invent new ones.
 
 ![Pareto Frontier](1_pareto_frontier.png)
 ![Frontier Parameter Evolution](2_frontier_parameters.png)
 ![Time Breakdown](3_time_breakdown.png)
 ![Time Breakdown Stacked](4_time_breakdown_stacked.png)
-![Coverage vs Fabrication](5_parameter_heatmap.png)
+![Jaccard Index Across Parameter Space](5_parameter_heatmap.png)

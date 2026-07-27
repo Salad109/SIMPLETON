@@ -1,7 +1,7 @@
 # Subwindow Count
 
-The PositionCache is `numSats * totalSteps * 3 floats * 4 bytes`. At 30k satellites and step-seconds=9, a 24h window
-is 3.5 GB. A 7-day window is 24.2 GB. This is too large for most systems.
+The PositionCache is `numSats * totalSteps * 3 floats * 4 bytes`. At 30k satellites and step-seconds=9, a 24h window is
+3.5 GB. A 7-day window is 24.2 GB. This is too large for most systems.
 
 `subwindow-count` splits the lookahead window into N sequential chunks. Each chunk runs the cache-dependent stages
 (propagate, interpolate, coarse scan, group, refine) and the cache goes out of scope before the next chunk starts.

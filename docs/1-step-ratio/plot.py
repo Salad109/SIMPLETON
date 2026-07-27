@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 df = pd.read_csv('conjunction_benchmark.csv')
 param = 'step_ratio'
-param_label = 'Step Second Ratio'
+param_label = 'Step Ratio'
 avg = df.groupby(param).mean(numeric_only=True).reset_index()
 
 # Print table
