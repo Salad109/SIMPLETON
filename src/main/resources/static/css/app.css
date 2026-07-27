@@ -1008,6 +1008,10 @@ html.light .type-badge[data-type="ROCKET BODY"] {
         gap: 12px;
     }
 
+    .asym-grid > .span-rows {
+        grid-area: auto;
+    }
+
     .detail-grid-3,
     .detail-grid-2,
     .viz-obj-grid {
