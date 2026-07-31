@@ -131,9 +131,9 @@
 
     const cssVars = getComputedStyle(document.documentElement);
     const hex = name => parseInt(cssVars.getPropertyValue(name).trim().slice(1), 16);
-    const COLOR_OBJ1 = hex('--accent');
-    const COLOR_OBJ2 = hex('--err');
-    const COLOR_DIST = hex('--accent-bright');
+    let COLOR_OBJ1 = hex('--accent');
+    let COLOR_OBJ2 = hex('--err');
+    let COLOR_DIST = hex('--accent-bright');
 
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
@@ -249,6 +249,21 @@
         timeSpeed = +e.target.value;
         speedValue.textContent = timeSpeed + 'x';
     };
+
+    function applyThemeColors() {
+        COLOR_OBJ1 = hex('--accent');
+        COLOR_OBJ2 = hex('--err');
+        COLOR_DIST = hex('--accent-bright');
+        sat1.material.color.setHex(COLOR_OBJ1);
+        sat2.material.color.setHex(COLOR_OBJ2);
+        distLine.material.color.setHex(COLOR_DIST);
+        trail1.material.color.setHex(COLOR_OBJ1);
+        trail2.material.color.setHex(COLOR_OBJ2);
+    }
+
+    document.querySelector('.theme-btn')?.addEventListener('click', () => {
+        requestAnimationFrame(applyThemeColors);
+    });
 
     function toScreen(v) {
         const ndc = v.clone().project(camera);
