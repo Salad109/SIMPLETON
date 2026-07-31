@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18-alpine
+    image: postgres:18
     container_name: conjunction-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-conjunction_db}
@@ -29,6 +29,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       SPACETRACK_USERNAME: ${SPACETRACK_USERNAME}
       SPACETRACK_PASSWORD: ${SPACETRACK_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-}
     ports:
       - "${APP_PORT:-8080}:8080"
 
