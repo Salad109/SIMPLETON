@@ -51,7 +51,7 @@
     let orbitB = PRESETS[0].orbitB;
     let phases = {mAOffset: 0, mBOffset: 0};
 
-    const DEFAULTS = {tolerance: 72, cellSize: 48, stepSeconds: 9, stride: 50};
+    const DEFAULTS = {tolerance: 72, cellSize: 55.38, stepSeconds: 9, stride: 50};
 
     const HALF_NEIGHBORS_2D = [
         {dx: 1, dy: 0},
@@ -192,14 +192,19 @@
         };
     }
 
+    // Like PropagationService, the last knot is pulled back onto the end of the window, so the final
+    // interval is short rather than running past it. Every sample stays bracketed by two knots.
+    function knotCount() {
+        return Math.max(1, Math.ceil(PERIOD_SECONDS / (state.stride * state.stepSeconds)));
+    }
+
     function interpPos(stateFn, t) {
-        const dtSeconds = state.stride * state.stepSeconds;
-        const knotDtParam = dtSeconds / PERIOD_SECONDS;
-        const k = Math.floor(t / knotDtParam);
+        const knotDtParam = (state.stride * state.stepSeconds) / PERIOD_SECONDS;
+        const k = Math.min(Math.floor(t / knotDtParam), knotCount() - 1);
         const t0 = k * knotDtParam;
-        const t1 = t0 + knotDtParam;
-        const u = (t - t0) / knotDtParam;
-        return hermite(stateFn(t0), stateFn(t1), u, dtSeconds);
+        const t1 = Math.min(t0 + knotDtParam, 1);
+        const u = (t - t0) / (t1 - t0);
+        return hermite(stateFn(t0), stateFn(t1), u, (t1 - t0) * PERIOD_SECONDS);
     }
 
     function algoPos(stateFn, t) {
@@ -329,7 +334,9 @@
         const stepDt = state.stepSeconds / PERIOD_SECONDS;
 
         if (state.showKnots) {
-            for (let t = 0; t <= 1.0001; t += knotDt) {
+            const last = knotCount();
+            for (let k = 0; k <= last; k++) {
+                const t = Math.min(k * knotDt, 1);
                 drawKnot(ctx, stateA(t), w, h, C);
                 drawKnot(ctx, stateB(t), w, h, C);
             }
@@ -647,9 +654,15 @@
         {id: 'show-truth', key: 'showTruth'}
     ];
 
+    // Readout precision follows the slider's own step, so each value reads as it does in application.properties.
+    function formatSlider(el) {
+        return parseFloat(el.value).toFixed((el.step.split('.')[1] || '').length);
+    }
+
     function setSliderUi(id, valId, v) {
-        document.getElementById(id).value = v;
-        document.getElementById(valId).textContent = v;
+        const el = document.getElementById(id);
+        el.value = v;
+        document.getElementById(valId).textContent = formatSlider(el);
     }
 
     function setTimeUi(t) {
@@ -662,8 +675,8 @@
             const el = document.getElementById(s.id);
             const valEl = document.getElementById(s.valId);
             el.addEventListener('input', () => {
-                state[s.key] = parseInt(el.value, 10);
-                valEl.textContent = el.value;
+                state[s.key] = parseFloat(el.value);
+                valEl.textContent = formatSlider(el);
                 redraw();
             });
         }
