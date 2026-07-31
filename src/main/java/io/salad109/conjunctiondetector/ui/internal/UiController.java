@@ -7,7 +7,7 @@ import io.salad109.conjunctiondetector.ingestion.IngestionLogService;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -85,7 +85,7 @@ public class UiController {
     }
 
     @GetMapping("/hx/satellites")
-    public String satellitesFragment(@PageableDefault(sort = "noradCatId", direction = Sort.Direction.ASC) Pageable pageable, Model model) {
+    public String satellitesFragment(@SortDefault(sort = "noradCatId", direction = Sort.Direction.ASC) Pageable pageable, Model model) {
         model.addAttribute("page", satelliteService.getBriefInfos(pageable));
 
         Sort.Order order = pageable.getSort().stream().findFirst().orElse(null);
@@ -96,7 +96,7 @@ public class UiController {
     }
 
     @GetMapping("/hx/conjunctions")
-    public String conjunctionsFragment(@PageableDefault(sort = "tca", direction = Sort.Direction.DESC) Pageable pageable,
+    public String conjunctionsFragment(@SortDefault(sort = "tca", direction = Sort.Direction.ASC) Pageable pageable,
                                        @RequestParam(defaultValue = "false") boolean includeFormations,
                                        Model model) {
         model.addAttribute("page", conjunctionService.getConjunctions(pageable, includeFormations));
@@ -104,7 +104,7 @@ public class UiController {
 
         Sort.Order order = pageable.getSort().stream().findFirst().orElse(null);
         model.addAttribute("sortField", order != null ? order.getProperty() : "tca");
-        model.addAttribute("sortDir", order != null ? order.getDirection().name().toLowerCase(Locale.ROOT) : "desc");
+        model.addAttribute("sortDir", order != null ? order.getDirection().name().toLowerCase(Locale.ROOT) : "asc");
 
         return "fragments/conjunction-table";
     }
