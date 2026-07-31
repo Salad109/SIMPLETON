@@ -5,13 +5,6 @@
 
 <nav th:replace="~{fragments/nav :: nav('stats')}"></nav>
 
-<!-- Load scan status into nav -->
-<div hx-get="/hx/nav-status/scan"
-     hx-swap="innerHTML"
-     hx-target="#nav-status"
-     hx-trigger="load"
-     style="display:none"></div>
-
 <main class="page-body">
     <!-- KPI strip -->
     <div class="stat-grid"

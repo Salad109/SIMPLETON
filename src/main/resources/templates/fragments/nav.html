@@ -5,8 +5,7 @@
   Usage: <nav th:replace="~{fragments/nav :: nav('stats')}"></nav>
   activePage: 'stats' | 'conjunctions' | 'catalog' | 'playground' | '' (satellite/viz detail pages)
 
-  Each page loads its own status into #nav-status via HTMX.
-  See fragments/nav-status-scan.html and nav-status-sync.html.
+  #nav-status is filled by the page.
 -->
 <nav class="app-nav" th:fragment="nav(activePage)">
     <button aria-label="Open menu" class="nav-burger" onclick="toggleDrawer()">
@@ -26,7 +25,7 @@
                th:classappend="${activePage == 'playground'} ? ' active' : ''">Playground</a>
         </div>
         <div class="nav-right" id="nav-status">
-            <!-- Populated by each page via: hx-get="..." hx-target="#nav-status" hx-trigger="load" -->
+            <!-- Filled by pages that hx-get a nav-status fragment on load. -->
         </div>
         <button class="theme-btn" onclick="toggleTheme()" title="Toggle light/dark"></button>
     </div>
