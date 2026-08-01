@@ -15,6 +15,10 @@ import java.util.stream.IntStream;
 @Service
 public class ScanService {
 
+    // Buffer for collision threshold, since the analytical minimum is approximate.
+    // Going past 1.3 gives no improvement.
+    private static final double GATE_MULTIPLIER = 1.3;
+
     private final PropagationService propagationService;
 
     public ScanService(PropagationService propagationService) {
@@ -116,7 +120,7 @@ public class ScanService {
         int idxA = cache.noradIdToArrayId().get(pair.a().noradCatId());
         int idxB = cache.noradIdToArrayId().get(pair.b().noradCatId());
 
-        double gateKm = thresholdKm * 1.1;
+        double gateKm = thresholdKm * GATE_MULTIPLIER;
         double gateSq = gateKm * gateKm;
         double bestDistSq = Double.MAX_VALUE;
         double bestT = 0;
