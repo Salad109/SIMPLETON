@@ -1,12 +1,14 @@
 package io.salad109.conjunctiondetector.conjunction.internal.benchmark;
 
-record ScanParams(double toleranceKm, int stepRatio, int stride, double cellRatio) {
+record ScanParams(double toleranceKm, double stepSeconds, int stride, double cellSizeKm) {
 
-    double stepSeconds() {
-        return toleranceKm / stepRatio;
+    static ScanParams ofKnotGap(double toleranceKm, double stepSeconds, double knotGapSeconds,
+                                double cellSizeKm) {
+        int stride = Math.max(1, (int) Math.round(knotGapSeconds / stepSeconds));
+        return new ScanParams(toleranceKm, stepSeconds, stride, cellSizeKm);
     }
 
-    double cellSizeKm() {
-        return toleranceKm / cellRatio;
+    double knotGapSeconds() {
+        return stride * stepSeconds;
     }
 }

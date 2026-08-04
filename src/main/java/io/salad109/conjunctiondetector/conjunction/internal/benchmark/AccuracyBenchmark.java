@@ -12,15 +12,18 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.DoubleStream;
 
 /**
  * Linux:
- * ./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-accuracy -Dspring-boot.run.jvmArguments="-Xmx12g -Xms12g -XX:+AlwaysPreTouch"
+ * ./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-accuracy -Dspring-boot.run.jvmArguments="-Xmx20g -Xms20g -XX:+AlwaysPreTouch"
  * Windows:
- * ./mvnw spring-boot:run "-Dspring-boot.run.profiles=benchmark-accuracy" "-Dspring-boot.run.jvmArguments=-Xmx12g -Xms12g -XX:+AlwaysPreTouch"
+ * ./mvnw spring-boot:run "-Dspring-boot.run.profiles=benchmark-accuracy" "-Dspring-boot.run.jvmArguments=-Xmx20g -Xms20g -XX:+AlwaysPreTouch"
  */
 @Component
 @Profile("benchmark-accuracy")
@@ -29,15 +32,24 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
     private static final Logger log = LoggerFactory.getLogger(AccuracyBenchmark.class);
 
     private static final int ITERATIONS = 5;
-    private static final double TOLERANCE_KM = 72.0;
+    // Center of the flat optimum band from docs/4.
+    private static final double TOLERANCE_KM = 84.0;
 
-    private static final int DEFAULT_STEP_RATIO = 9;
-    private static final int DEFAULT_STRIDE = 25;
-    private static final double DEFAULT_CELL_RATIO = 1.20;
+    // Locked values for whichever axes are not under test.
+    private static final double DEFAULT_STEP_SECONDS = 9.375;
+    private static final double DEFAULT_CELL_KM = 70.0;
+    private static final double DEFAULT_KNOT_GAP_SECONDS = 200.0;
 
-    private static final int[] STEP_RATIO_VALUES = {6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    private static final int[] STRIDE_VALUES = {1, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125};
-    private static final double[] CELL_RATIO_VALUES = {1, 1.1, 1.2, 1.3, 1.4, 1.45, 1.50, 1.55, 1.60, 1.65, 1.70, 1.75, 1.80, 1.85, 1.90, 1.95, 2, 2.05, 2.10, 2.15, 2.20, 2.25, 2.30};
+    // Ground truth. Safe margins on purpose
+    private static final double BASELINE_STEP_SECONDS = 9.375;
+    private static final int BASELINE_STRIDE = 1;
+    private static final double BASELINE_CELL_KM = 105.0;
+    private static final Duration TCA_TOLERANCE = Duration.ofSeconds(60);
+
+    // Every step divides the 6h subwindow into whole steps, so any winner is deployable unrounded.
+    private static final double[] STEP_SECONDS_VALUES = {6, 6.75, 7.2, 8, 9, 9.375, 10, 10.8, 12, 13.5};
+    private static final double[] KNOT_GAP_VALUES = {8, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640, 680, 720, 760, 800, 840, 880, 920, 960, 1000};
+    private static final double[] CELL_KM_VALUES = {84, 80, 76, 72, 68, 64, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36};
     private static final double[] TOLERANCE_VALUES = {24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160};
 
     public AccuracyBenchmark(SatelliteService satelliteService, PropagationService propagationService,
@@ -58,56 +70,97 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
         log.info("Fixed tolerance: {} km, threshold: {} km, lookahead: {} h",
                 TOLERANCE_KM, THRESHOLD_KM, LOOKAHEAD_HOURS);
 
-        log.info("");
-        log.info("Sweeping step ratio");
-        log.info("Locked: stride={}, cellRatio={}", DEFAULT_STRIDE, DEFAULT_CELL_RATIO);
-        {
-            List<BenchmarkResult> results = new ArrayList<>();
-            for (int stepRatio : STEP_RATIO_VALUES) {
-                results.addAll(runIterations(satellites,
-                        new ScanParams(TOLERANCE_KM, stepRatio, DEFAULT_STRIDE, DEFAULT_CELL_RATIO), ITERATIONS));
-            }
-            writeCsv(results, Paths.get("docs", "1-step-ratio", "conjunction_benchmark.csv"));
-        }
+        List<EventKey> safeEvents = runBaseline(satellites);
 
-        log.info("");
-        log.info("Sweeping interpolation stride");
-        log.info("Locked: stepRatio={}, cellRatio={}", DEFAULT_STEP_RATIO, DEFAULT_CELL_RATIO);
-        {
-            List<BenchmarkResult> results = new ArrayList<>();
-            for (int stride : STRIDE_VALUES) {
-                results.addAll(runIterations(satellites,
-                        new ScanParams(TOLERANCE_KM, DEFAULT_STEP_RATIO, stride, DEFAULT_CELL_RATIO), ITERATIONS));
-            }
-            writeCsv(results, Paths.get("docs", "2-interpolation-stride", "conjunction_benchmark.csv"));
-        }
-
-        log.info("");
-        log.info("Sweeping cell ratio");
-        log.info("Locked: stepRatio={}, stride={}", DEFAULT_STEP_RATIO, DEFAULT_STRIDE);
-        {
-            List<BenchmarkResult> results = new ArrayList<>();
-            for (double cellRatio : CELL_RATIO_VALUES) {
-                results.addAll(runIterations(satellites,
-                        new ScanParams(TOLERANCE_KM, DEFAULT_STEP_RATIO, DEFAULT_STRIDE, cellRatio), ITERATIONS));
-            }
-            writeCsv(results, Paths.get("docs", "3-cell-ratio", "conjunction_benchmark.csv"));
-        }
-
-        log.info("");
-        log.info("Sweeping tolerance");
-        log.info("Locked: stepRatio={}, stride={}, cellRatio={}", DEFAULT_STEP_RATIO, DEFAULT_STRIDE, DEFAULT_CELL_RATIO);
-        {
-            List<BenchmarkResult> results = new ArrayList<>();
-            for (double toleranceKm : TOLERANCE_VALUES) {
-                results.addAll(runIterations(satellites,
-                        new ScanParams(toleranceKm, DEFAULT_STEP_RATIO, DEFAULT_STRIDE, DEFAULT_CELL_RATIO), ITERATIONS));
-            }
-            writeCsv(results, Paths.get("docs", "4-conjunction-tolerance", "conjunction_benchmark.csv"));
+        for (Sweep s : sweeps()) {
+            log.info("");
+            log.info("Sweeping {} ({} configs)", s.name(), s.configs().size());
+            log.info("Locked: {}", s.locked());
+            sweep(satellites, safeEvents, s);
         }
 
         log.info("Benchmark complete");
         System.exit(0);
     }
 
+    private List<Sweep> sweeps() {
+        return List.of(
+                new Sweep("step size", "1-step-size",
+                        "cell=" + DEFAULT_CELL_KM + "km, knotGap=" + DEFAULT_KNOT_GAP_SECONDS + "s",
+                        DoubleStream.of(STEP_SECONDS_VALUES)
+                                .mapToObj(s -> ScanParams.ofKnotGap(TOLERANCE_KM, s,
+                                        DEFAULT_KNOT_GAP_SECONDS, DEFAULT_CELL_KM))
+                                .toList()),
+                new Sweep("knot gap", "2-knot-gap",
+                        "step=" + DEFAULT_STEP_SECONDS + "s, cell=" + DEFAULT_CELL_KM + "km",
+                        DoubleStream.of(KNOT_GAP_VALUES)
+                                .mapToObj(g -> ScanParams.ofKnotGap(TOLERANCE_KM, DEFAULT_STEP_SECONDS,
+                                        g, DEFAULT_CELL_KM))
+                                .toList()),
+                new Sweep("cell size", "3-cell-size",
+                        "step=" + DEFAULT_STEP_SECONDS + "s, knotGap=" + DEFAULT_KNOT_GAP_SECONDS + "s",
+                        DoubleStream.of(CELL_KM_VALUES)
+                                .mapToObj(c -> ScanParams.ofKnotGap(TOLERANCE_KM, DEFAULT_STEP_SECONDS,
+                                        DEFAULT_KNOT_GAP_SECONDS, c))
+                                .toList()),
+                new Sweep("tolerance", "4-conjunction-tolerance",
+                        "step=" + DEFAULT_STEP_SECONDS + "s, cell=" + DEFAULT_CELL_KM
+                                + "km, knotGap=" + DEFAULT_KNOT_GAP_SECONDS + "s",
+                        DoubleStream.of(TOLERANCE_VALUES)
+                                .mapToObj(t -> ScanParams.ofKnotGap(t, DEFAULT_STEP_SECONDS,
+                                        DEFAULT_KNOT_GAP_SECONDS, DEFAULT_CELL_KM))
+                                .toList()));
+    }
+
+    private List<EventKey> runBaseline(List<SatelliteScanInfo> satellites) {
+        ScanParams p = new ScanParams(TOLERANCE_KM, BASELINE_STEP_SECONDS,
+                BASELINE_STRIDE, BASELINE_CELL_KM);
+        log.info("");
+        log.info("Baseline: tolerance={}km step={}s stride={} cell={}km (TCA match window {}s)",
+                TOLERANCE_KM, BASELINE_STEP_SECONDS, BASELINE_STRIDE, BASELINE_CELL_KM,
+                TCA_TOLERANCE.toSeconds());
+
+        BenchmarkResult result = runBenchmark(satellites, p);
+        List<EventKey> events = result.refinedEvents();
+        log.info("Baseline: {} conjunctions in {}s", events.size(), result.totalTime() / 1000.0);
+
+        EventMatcher.MatchStats selfCheck = EventMatcher.match(events, events, TCA_TOLERANCE);
+        if (selfCheck.jaccard() != 1.0) {
+            log.error("Baseline self-match gave jaccard={} instead of 1.0; matcher is broken. Aborting.",
+                    selfCheck.jaccard());
+            System.exit(1);
+        }
+        log.info("Baseline self-match OK (jaccard=1.0)");
+        return events;
+    }
+
+    private void sweep(List<SatelliteScanInfo> satellites, List<EventKey> safeEvents, Sweep s) {
+        BenchmarkCsv csv = new BenchmarkCsv(BenchmarkCsv.Group.PARAMS, BenchmarkCsv.Group.COUNTS,
+                BenchmarkCsv.Group.TIMINGS, BenchmarkCsv.Group.MATCH, BenchmarkCsv.Group.MISS_ERROR);
+        for (ScanParams p : s.configs()) {
+            for (int i = 0; i < ITERATIONS; i++) {
+                BenchmarkResult result = runBenchmark(satellites, p);
+                EventMatcher.MatchStats stats = EventMatcher.match(safeEvents, result.refinedEvents(), TCA_TOLERANCE);
+                csv.addRow(result, stats);
+                if (i == 0) {
+                    log.info("  -> tol={}km step={}s cell={}km knotGap={}s | jaccard={} matched={} oursOnly={} safeOnly={} missErr median={}m p99={}m",
+                            String.format(Locale.ROOT, "%.0f", p.toleranceKm()),
+                            String.format(Locale.ROOT, "%.4f", p.stepSeconds()),
+                            String.format(Locale.ROOT, "%.1f", p.cellSizeKm()),
+                            String.format(Locale.ROOT, "%.0f", p.knotGapSeconds()),
+                            String.format(Locale.ROOT, "%.5f", stats.jaccard()),
+                            stats.matched(), stats.oursOnly(), stats.safeOnly(),
+                            String.format(Locale.ROOT, "%.1f", stats.missErrorMedianM()),
+                            String.format(Locale.ROOT, "%.1f", stats.missErrorP99M()));
+                }
+            }
+        }
+        writeString(s.outputPath(), csv.build());
+    }
+
+    private record Sweep(String name, String docsDir, String locked, List<ScanParams> configs) {
+        Path outputPath() {
+            return Paths.get("docs", docsDir, "conjunction_benchmark.csv");
+        }
+    }
 }

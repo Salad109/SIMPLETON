@@ -26,8 +26,9 @@ abstract class BenchmarkRunner {
 
     protected static final int LOOKAHEAD_HOURS = 24;
     protected static final double THRESHOLD_KM = 5.0;
+    // Re-check youngest epochs stored in catalog to not back-propagate.
     protected static final OffsetDateTime FIXED_START_TIME = OffsetDateTime
-            .of(2026, 5, 20, 5, 15, 0, 0, ZoneOffset.UTC);
+            .of(2026, 8, 3, 18, 0, 0, 0, ZoneOffset.UTC);
     private static final Logger log = LoggerFactory.getLogger(BenchmarkRunner.class);
     protected final SatelliteService satelliteService;
     protected final PropagationService propagationService;
@@ -92,8 +93,9 @@ abstract class BenchmarkRunner {
         long totalMs = propagatorTime + sgp4Time + interpTime
                 + checkPairs.getTime() + grouping.getTime() + refine.getTime() + probability.getTime();
 
-        log.info("tol={}km stepRatio={} stride={} cellRatio={} | {}ms | prop={}ms sgp4={}ms interp={}ms check={}ms group={}ms refine={}ms pc={}ms | {} conj",
-                (int) p.toleranceKm(), p.stepRatio(), p.stride(), String.format(Locale.ROOT, "%.2f", p.cellRatio()), totalMs,
+        log.info("tol={}km step={}s stride={} cell={}km | {}ms | prop={}ms sgp4={}ms interp={}ms check={}ms group={}ms refine={}ms pc={}ms | {} conj",
+                (int) p.toleranceKm(), String.format(Locale.ROOT, "%.4f", p.stepSeconds()), p.stride(),
+                String.format(Locale.ROOT, "%.1f", p.cellSizeKm()), totalMs,
                 propagatorTime, sgp4Time, interpTime,
                 checkPairs.getTime(), grouping.getTime(), refine.getTime(),
                 probability.getTime(), conjunctions.size());
@@ -114,10 +116,6 @@ abstract class BenchmarkRunner {
         return results;
     }
 
-    protected void writeCsv(List<BenchmarkResult> results, Path outputPath) {
-        writeString(outputPath, buildCsv(results));
-    }
-
     protected void writeString(Path outputPath, String content) {
         try {
             Path parent = outputPath.toAbsolutePath().getParent();
@@ -127,22 +125,6 @@ abstract class BenchmarkRunner {
         } catch (IOException e) {
             log.error("Failed to write CSV to {}: {}", outputPath, e.getMessage());
         }
-    }
-
-    private String buildCsv(List<BenchmarkResult> results) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("tolerance_km,step_ratio,cell_ratio,interp_stride,detections,events,conj,propagator_s,sgp4_s,interp_s,check_s,grouping_s,refine_s,probability_s,total_s\n");
-        for (BenchmarkResult r : results) {
-            ScanParams p = r.params();
-            sb.append(String.format(Locale.ROOT, "%.0f,%d,%.2f,%d,%d,%d,%d,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f%n",
-                    p.toleranceKm(), p.stepRatio(), p.cellRatio(), p.stride(),
-                    r.detections, r.events, r.conjunctions,
-                    r.propagatorTime / 1000.0, r.sgp4Time / 1000.0,
-                    r.interpTime / 1000.0, r.checkTime / 1000.0,
-                    r.groupingTime / 1000.0, r.refineTime / 1000.0,
-                    r.probabilityTime / 1000.0, r.totalTime / 1000.0));
-        }
-        return sb.toString();
     }
 
     record BenchmarkResult(ScanParams params,

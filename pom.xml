@@ -184,7 +184,7 @@
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
-                        <arg>-Xplugin:ErrorProne -XepAllSuggestionsAsWarnings -Xep:ArrayRecordComponent:OFF</arg>
+                        <arg>-Xplugin:ErrorProne -XepAllSuggestionsAsWarnings -Xep:ArrayRecordComponent:OFF -Xep:ImmutableEnumChecker:OFF</arg>
                     </compilerArgs>
                     <annotationProcessorPaths>
                         <path>

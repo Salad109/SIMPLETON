@@ -1,78 +1,72 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 df = pd.read_csv('conjunction_benchmark.csv')
-param = 'step_ratio'
-param_label = 'Step Ratio'
+param = 'cell_km'
+param_label = 'Cell Size (km)'
 avg = df.groupby(param).mean(numeric_only=True).reset_index()
+sd = df.groupby(param)['total_s'].std()
 
-# Print table
-baseline = avg['conj'].max()
-tolerance_km = avg['tolerance_km'].iloc[0]
-print(f"| Ratio | Step (s) | Conjunctions | Accuracy | Loss  | Mean Time |")
-print(f"|-------|----------|--------------|----------|-------|-----------|")
+print(f"| Cell (km) | Conjunctions | Jaccard | Missed | Miss err p99 | Total Time |")
+print(f"|---|---|---|---|---|---|")
 for _, row in avg.iterrows():
-    ratio = int(row[param])
-    step = tolerance_km / ratio
-    conj = int(round(row['conj']))
-    accuracy = row['conj'] / baseline * 100
-    loss = 100 - accuracy
-    time = row['total_s']
-    print(f"| {ratio:<5} | {step:<8.2f} | {conj:>12,} | {accuracy:>7.2f}% | {loss:>5.2f}% | {time:.1f}s{'':<4} |")
+    print(f"| {row[param]:.0f} | {int(round(row['conj'])):,} | {row['jaccard']:.5f} | "
+          f"{int(round(row['safe_only']))} | {row['miss_err_p99_m']:.3f} m | "
+          f"{row['total_s']:.1f}s +/- {sd[row[param]]:.1f} |")
 
 timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
 colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']
 labels = ['Propagator Build', 'SGP4', 'Interpolation', 'Check Pairs', 'Grouping', 'Refine', 'Probability']
+markers = ['^', 'd', 'D', 'x', 'v', 'p', '*']
 
-# Plot 1 - Total time
+# 1 - total time
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(avg[param], avg['total_s'], 'o-', linewidth=2, markersize=8, color='#D62839')
+ax.errorbar(avg[param], avg['total_s'], yerr=sd.values, fmt='o-', color='#2E86AB',
+            markersize=7, capsize=3, linewidth=2)
 ax.set_xlabel(param_label, fontsize=12)
 ax.set_ylabel('Total Time (s)', fontsize=12)
-ax.set_title('Total Processing Time vs Step Ratio', fontsize=14, fontweight='bold')
+ax.set_title('Total Processing Time vs Cell Size', fontsize=14, fontweight='bold')
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig('1_total_time.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-# Plot 2 - Line per component
-markers = ['^', 'd', 'D', 'x', 'v', 'p', '*']
+# 2 - line per component
 fig, ax = plt.subplots(figsize=(12, 7))
 for col, color, marker, label in zip(timing_columns, colors, markers, labels):
     ax.plot(avg[param], avg[col], marker=marker, linestyle='-', label=label,
             color=color, linewidth=2, markersize=8)
 ax.set_xlabel(param_label, fontsize=12)
 ax.set_ylabel('Time (s)', fontsize=12)
-ax.set_title('Time Breakdown by Step Ratio', fontsize=14, fontweight='bold')
+ax.set_title('Time Breakdown by Cell Size', fontsize=14, fontweight='bold')
 ax.legend(fontsize=10, ncol=2)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig('2_time_breakdown.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-# Plot 3 - Stacked area
-import numpy as np
+# 3 - stacked area
 fig, ax = plt.subplots(figsize=(12, 7))
-y_stack = np.vstack([avg[col].values for col in timing_columns])
-ax.stackplot(avg[param], y_stack, labels=labels, colors=colors, alpha=0.8)
+ax.stackplot(avg[param], np.vstack([avg[c].values for c in timing_columns]),
+             labels=labels, colors=colors, alpha=0.8)
 ax.set_xlabel(param_label, fontsize=12)
 ax.set_ylabel('Time (s)', fontsize=12)
-ax.set_title('Time Breakdown Stacked by Step Ratio', fontsize=14, fontweight='bold')
+ax.set_title('Time Breakdown Stacked by Cell Size', fontsize=14, fontweight='bold')
 ax.legend(fontsize=8, loc='upper left', ncol=2)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig('3_time_breakdown_stacked.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-# Plot 4 - Conjunctions
+# 4 - accuracy
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(avg[param], avg['conj'], 'o-', linewidth=2, markersize=8, color='#2E86AB')
-for _, row in avg.iterrows():
-    ax.text(row[param], row['conj'], f'  {row["conj"]:.0f}', va='bottom', fontsize=9)
+ax.plot(avg[param], avg['jaccard'], 'o-', color='#2E86AB', linewidth=2, markersize=7)
+ax.set_ylim(min(avg['jaccard'].min() - 0.005, 0.98), 1.001)
 ax.set_xlabel(param_label, fontsize=12)
-ax.set_ylabel('Conjunctions', fontsize=12)
-ax.set_title('Conjunctions Detected vs Step Ratio', fontsize=14, fontweight='bold')
+ax.set_ylabel('Jaccard vs stride=1 baseline', fontsize=12)
+ax.set_title('Accuracy vs Cell Size', fontsize=14, fontweight='bold')
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
-plt.savefig('4_conjunctions.png', dpi=300, bbox_inches='tight')
+plt.savefig('4_accuracy.png', dpi=300, bbox_inches='tight')
 plt.close()

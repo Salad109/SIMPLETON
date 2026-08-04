@@ -1,53 +1,94 @@
 # Pareto Frontier: Speed vs Accuracy
 
-The previous benchmarks (docs 1-4) swept one parameter at a time while holding the others at safe defaults. This
-benchmark sweeps all three simultaneously using a bounded grid search to find the Pareto frontier of speed vs accuracy.
-The key finding is that picking the 99.9% accuracy option for each parameter individually does NOT produce 99.9%
-accuracy when all three are changed together. The losses interact and compound in unexpected ways.
+Docs 1-4 sweep one parameter at a time with the others held at safe values. That answers where each parameter stops
+paying off on its own, but not whether the isolated optimal values still hold when all applied together. This benchmark
+sweeps all three simultaneously using a bounded grid search to find the Pareto frontier of speed vs accuracy.
 
 ## Setup
 
-- 30100-object catalog, 24 h lookahead, 72 km tolerance, 5 km collision threshold
+- 31,665-object catalog, 24 h lookahead, 84 km tolerance, 5 km collision threshold
+- Ground truth: `stride=1` at step 9.375 s, cell 105 km. Deliberately safe defaults.
 - 3 iterations per config, median time
-- Safe baseline: stepRatio=9, stride=20, cellRatio=0.9 (finest grid in the sweep)
-- Knobs loosened until Jaccard drops below 0.98, then pruned.
+- Steps 9.375 / 10.0 / 10.8 / 12.0 s, knot gap 150 to 700 s in 50 s steps, cell size 84 down to 44 km in 2.5 km steps
+- **Jaccard** = `matched / (matched + ours_only + safe_only)`, matched by NORAD pair and TCA within 60 s
 
-## Accuracy metric
-
-Each candidate's refined events are matched against the safe baseline by NORAD ID pair and TCA within 60 s.
-**Jaccard** = `matched / (matched + ours_only + safe_only)`, with two derived rates: **coverage** =
-`matched / safe_total` (events recovered) and **fabrication** = `ours_only / safe_total` (events we made up).
+Each axis ends at the first value whose 1-D sweep fell below 0.99 Jaccard: step 12.0 s, gap 684 s, cell 44 km. A
+parameter that cannot clear the bar on its own never clears it once another is also loosened, so the bound cannot
+exclude a configuration that would have qualified.
 
 ## Pareto Frontier
 
-| Step  | Stride | Cell     | Cell (km) | Conj      | Matched   | Ours-only | Safe-only | Jaccard    | Coverage   | Fabrication | Time       |
-|-------|--------|----------|-----------|-----------|-----------|-----------|-----------|------------|------------|-------------|------------|
-| 9     | 30     | 1.30     | 55.4      | 43871     | 43871     | 0         | 0         | 1.0000     | 1.0000     | 0.0000      | 30.77s     |
-| 9     | 40     | 1.30     | 55.4      | 43870     | 43870     | 0         | 1         | 1.0000     | 1.0000     | 0.0000      | 27.65s     |
-| 8     | 30     | 1.10     | 65.5      | 43871     | 43870     | 1         | 1         | 1.0000     | 1.0000     | 0.0000      | 27.32s     |
-| 8     | 40     | 1.10     | 65.5      | 43868     | 43868     | 0         | 3         | 0.9999     | 0.9999     | 0.0000      | 25.89s     |
-| 8     | 50     | 1.00     | 72.0      | 43847     | 43845     | 2         | 26        | 0.9994     | 0.9994     | 0.0000      | 24.45s     |
-| 8     | 50     | 1.20     | 60.0      | 43841     | 43839     | 2         | 32        | 0.9992     | 0.9993     | 0.0000      | 24.02s     |
-| **8** | **50** | **1.30** | **55.4**  | **43815** | **43813** | **2**     | **58**    | **0.9986** | **0.9987** | **0.0000**  | **23.74s** |
-| 8     | 60     | 1.40     | 51.4      | 43697     | 43696     | 1         | 175       | 0.9960     | 0.9960     | 0.0000      | 23.36s     |
-| 8     | 50     | 1.50     | 48.0      | 43645     | 43643     | 2         | 228       | 0.9948     | 0.9948     | 0.0000      | 22.93s     |
-| 8     | 55     | 1.50     | 48.0      | 43489     | 43487     | 2         | 384       | 0.9912     | 0.9912     | 0.0000      | 22.40s     |
-| 7     | 50     | 0.90     | 80.0      | 43262     | 43261     | 1         | 610       | 0.9861     | 0.9861     | 0.0000      | 22.14s     |
-| 7     | 50     | 1.20     | 60.0      | 43229     | 43228     | 1         | 643       | 0.9853     | 0.9853     | 0.0000      | 21.92s     |
-| 7     | 50     | 1.30     | 55.4      | 43130     | 43129     | 1         | 742       | 0.9831     | 0.9831     | 0.0000      | 21.84s     |
-| 7     | 45     | 1.20     | 60.0      | 43107     | 43106     | 1         | 765       | 0.9825     | 0.9826     | 0.0000      | 21.82s     |
-| 7     | 45     | 1.30     | 55.4      | 43010     | 43009     | 1         | 862       | 0.9803     | 0.9804     | 0.0000      | 21.71s     |
+| Step (s) | Knot Gap | Cell (km) | Stride | Conj       | Missed | Extra | Jaccard     | Time      |
+|----------|----------|-----------|--------|------------|--------|-------|-------------|-----------|
+| 9.375    | 197s     | 66.5      | 21     | 58,406     | 2      | 2     | 0.99993     | 33.6s     |
+| 10.0     | 250s     | 71.5      | 25     | 58,406     | 3      | 3     | 0.99990     | 30.9s     |
+| **10.8** | **346s** | **74.0**  | **32** | **58,405** | **4**  | **3** | **0.99988** | **26.7s** |
+| 10.8     | 346s     | 71.5      | 32     | 58,397     | 12     | 3     | 0.99974     | 26.5s     |
+| 10.8     | 454s     | 76.5      | 42     | 58,388     | 21     | 3     | 0.99959     | 25.7s     |
+| 10.8     | 454s     | 71.5      | 42     | 58,380     | 29     | 3     | 0.99945     | 25.0s     |
+| 10.8     | 454s     | 66.5      | 42     | 58,356     | 53     | 3     | 0.99904     | 25.0s     |
+| 10.8     | 454s     | 64.0      | 42     | 58,331     | 78     | 3     | 0.99861     | 24.9s     |
+| 10.8     | 497s     | 61.5      | 46     | 58,267     | 143    | 4     | 0.99748     | 24.7s     |
+| 10.8     | 454s     | 59.0      | 42     | 58,207     | 203    | 4     | 0.99646     | 24.2s     |
+| 10.8     | 454s     | 56.5      | 42     | 58,113     | 297    | 4     | 0.99485     | 24.2s     |
+| 10.8     | 605s     | 61.5      | 56     | 58,032     | 376    | 2     | 0.99353     | 24.1s     |
+| 10.8     | 605s     | 59.0      | 56     | 57,957     | 451    | 2     | 0.99224     | 23.8s     |
+| 10.8     | 605s     | 56.5      | 56     | 57,870     | 539    | 3     | 0.99072     | 23.7s     |
+| 10.8     | 605s     | 54.0      | 56     | 57,672     | 737    | 3     | 0.98733     | 23.3s     |
 
-Bold row is the production operating point: 23.74 s @ Jaccard=0.9986, 1.3x faster than the safe baseline.
+Bold row is the production operating point. It sits where marginal cost breaks.
+
+## Combined effect
+
+Each 1-D sweep has a loosest value that still scored 0.999 or better on its own axis: a 10.8 s step in `docs/1`, a 516 s
+gap in `docs/2`, 56 km cells in `docs/3`. Applied together they score 0.99454 and miss 314 events, against 4 at the
+operating point. They do not survive combination because each already costs tens to hundreds of events on its own, and
+those costs add:
+
+|                    | Missed |
+|--------------------|-------:|
+| Neither loosened   |      4 |
+| Gap only, 497 s    |     34 |
+| Cell only, 56.5 km |    285 |
+| Added              |    315 |
+| Measured together  |    314 |
+
+This holds across the grid. Predicting any configuration's missed count by adding the cost of each loosened parameter
+separately is exact for 348 of the 496 points.
+
+Step size and cell size are not two independent settings. `docs/1` derives the closing speed below which a pair is
+guaranteed to be sampled while still inside the tolerance sphere:
+
+    v_guar = 2 * (cell_size - threshold) / step
+
+Pairs closing faster than `v_guar` can cross the sphere between two samples and go unseen. Cell size and step size both
+appear in it, so what decides accuracy is the value the two produce together. Three configurations at a 200 s knot gap:
+
+| Cell    | Step   | v_guar    | Missed |
+|---------|--------|-----------|-------:|
+| 54 km   | 9.375s | 10.5 km/s |     90 |
+| 54 km   | 10.8s  | 9.1 km/s  |    476 |
+| 61.5 km | 10.8s  | 10.5 km/s |    116 |
+
+The first two share a cell size and are 5.3x apart. The first and third have neither cell size nor step in common, share
+only a `v_guar`, and are 29% apart. Across the whole grid two configurations sharing a cell size typically differ by 6x,
+and two sharing a `v_guar` by 13%.
+
+The knot gap does not appear in `v_guar`, and it causes misses a different way. Cell size and step decide whether a
+close pair is compared at all. The gap decides how far the interpolated positions have drifted from real SGP4 when that
+comparison happens.
+
+The three parameters therefore act through two error sources. Interpolation error follows the knot gap. Grid capture
+follows `v_guar`, which step size and cell size set jointly. Both stay in the noise while `v_guar` is above roughly 12
+km/s and the gap is under roughly 450 s.
 
 ## Fabrication
 
-`ours_only` never exceeds 2 events out of ~43k. Stage 4 propagates real SGP4 at the analytical TCA and drops anything
-past 5 km, so nothing emitted is fake: those 2 are real approaches that missed the baseline's pair + 60 s TCA match.
-Loosening the knobs makes us miss real events, never invent new ones.
+`ours_only` stays between 2 and 6 across the whole grid, against roughly 58,000 events. Stage 4 propagates SGP4 at the
+analytical TCA and drops anything past 5 km, so every stored event is a real approach that ground truth's pair-plus-60 s
+match did not pair. The failure mode of loosening the parameters is missed events.
 
 ![Pareto Frontier](1_pareto_frontier.png)
 ![Frontier Parameter Evolution](2_frontier_parameters.png)
 ![Time Breakdown](3_time_breakdown.png)
 ![Time Breakdown Stacked](4_time_breakdown_stacked.png)
-![Jaccard Index Across Parameter Space](5_parameter_heatmap.png)

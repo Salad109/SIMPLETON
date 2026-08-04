@@ -1,114 +1,105 @@
-import pandas as pd
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
-JACCARD_THRESHOLD = 0.98
+JACCARD_THRESHOLD = 0.99
 
 df = pd.read_csv('pareto_benchmark.csv')
 
-safe_total = df['matched'] + df['safe_only']
-df['coverage'] = np.where(safe_total > 0, df['matched'] / safe_total, 1.0)
-df['fabrication'] = np.where(safe_total > 0, df['ours_only'] / safe_total, 0.0)
-
-# Pareto frontier: maximize jaccard, minimize total_s
+# Pareto frontier: cheapest config at each accuracy level.
 sorted_df = df.sort_values(['jaccard', 'total_s'], ascending=[False, True]).reset_index(drop=True)
-frontier_mask = []
-best_time = float('inf')
+mask, best_time = [], float('inf')
 for _, row in sorted_df.iterrows():
-    if row['total_s'] < best_time:
-        frontier_mask.append(True)
-        best_time = row['total_s']
-    else:
-        frontier_mask.append(False)
-sorted_df['is_pareto'] = frontier_mask
-frontier = sorted_df[sorted_df['is_pareto']].sort_values('jaccard', ascending=False)
+    mask.append(row['total_s'] < best_time)
+    best_time = min(best_time, row['total_s'])
+frontier = sorted_df[mask].sort_values('jaccard', ascending=False).reset_index(drop=True)
 
-baseline = df.iloc[0]
-print(f"\nBaseline (safe config): {int(baseline['conj'])} conj, "
-      f"jaccard={baseline['jaccard']:.4f}, {baseline['total_s']:.2f}s")
-print(f"Total evaluated: {len(df)}")
-print(f"Configs above {JACCARD_THRESHOLD} jaccard: {(df['jaccard'] >= JACCARD_THRESHOLD).sum()}")
+print(f"Evaluated {len(df)} points, {(df['jaccard'] >= JACCARD_THRESHOLD).sum()} at or above "
+      f"{JACCARD_THRESHOLD} Jaccard. Time {df['total_s'].min():.1f}-{df['total_s'].max():.1f}s.")
 
 print(f"\nPareto frontier ({len(frontier)} points):")
-print(f"| Step | Stride | Cell  | Conj  | Matched | Ours-only | Safe-only | Jaccard | Coverage | Fabrication | Time   |")
-print(f"|------|--------|-------|-------|---------|-----------|-----------|---------|----------|-------------|--------|")
-for _, row in frontier.iterrows():
-    print(f"| {int(row['step_ratio']):<4} | {int(row['interp_stride']):<6} | {row['cell_ratio']:<5.2f} "
-          f"| {int(row['conj']):>5} | {int(row['matched']):>7} | {int(row['ours_only']):>9} "
-          f"| {int(row['safe_only']):>9} | {row['jaccard']:>7.4f} | {row['coverage']:>8.4f} "
-          f"| {row['fabrication']:>11.4f} | {row['total_s']:>5.2f}s |")
+print("| Step (s) | Knot Gap | Cell (km) | Stride | Conj | Missed | Extra | Jaccard | Time |")
+print("|---|---|---|---|---|---|---|---|---|")
+for _, r in frontier.iterrows():
+    print(f"| {r['step_s']:.4g} | {r['knot_gap_s']:.0f}s | {r['cell_km']:.1f} "
+          f"| {int(r['interp_stride'])} | {int(r['conj']):,} | {int(r['safe_only'])} "
+          f"| {int(r['ours_only'])} | {r['jaccard']:.5f} | {r['total_s']:.1f}s |")
+
+# What each accuracy step costs, which is the argument for where to sit on the frontier.
+asc = frontier.sort_values('total_s').reset_index(drop=True)
+print("\nMarginal cost along the frontier:")
+print(f"{'time':>14}{'d_time':>9}{'missed':>14}{'recovered':>11}{'ms/event':>10}")
+for i in range(1, len(asc)):
+    a, b = asc.iloc[i - 1], asc.iloc[i]
+    dt, saved = b['total_s'] - a['total_s'], a['safe_only'] - b['safe_only']
+    per = f'{dt * 1000 / saved:10.1f}' if saved > 0 else f"{'-':>10}"
+    print(f"{a['total_s']:6.1f} ->{b['total_s']:6.1f}{dt:9.2f}"
+          f"{a['safe_only']:7.0f} ->{b['safe_only']:5.0f}{saved:11.0f}{per}")
+span = asc['total_s'].max() - asc['total_s'].min()
+print(f"\nFull frontier spans {span:.1f}s ({span / asc['total_s'].max() * 100:.0f}% of the slowest) "
+      f"and {asc['safe_only'].max():.0f} to {asc['safe_only'].min():.0f} missed events.")
 
 timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
 colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']
 labels = ['Propagator Build', 'SGP4', 'Interpolation', 'Check Pairs', 'Grouping', 'Refine', 'Probability']
+markers = ['^', 'd', 'D', 'x', 'v', 'p', '*']
 
-# Plot 1 - Jaccard vs Time scatter with Pareto frontier
-fig, ax = plt.subplots(figsize=(12, 7))
+# 1 - the frontier, twice. Jaccard is the metric of record but packs most of the frontier into the
+# top 1% of the axis, so the right panel replots it as missed events on a log scale.
+fig, (ax, ax2) = plt.subplots(1, 2, figsize=(16, 7))
 
-ax.scatter(df['total_s'], df['jaccard'],
-           c='#AAAAAA', s=60, alpha=0.6, label='Evaluated points', zorder=2)
-
-ax.plot(frontier['total_s'], frontier['jaccard'],
-        'o-', color='#D62839', linewidth=2, markersize=10,
-        label='Pareto frontier', zorder=3)
-
-for _, row in frontier.iterrows():
-    label = f"s{int(row['step_ratio'])} i{int(row['interp_stride'])} c{row['cell_ratio']:.1f}"
-    ax.annotate(label, (row['total_s'], row['jaccard']),
-                textcoords='offset points', xytext=(8, -4), fontsize=7,
-                color='#D62839')
-
-ax.axhline(y=JACCARD_THRESHOLD, color='#FF9900', linestyle='--', alpha=0.7,
-           label=f'{JACCARD_THRESHOLD} Jaccard threshold')
-
-ax.set_ylim(JACCARD_THRESHOLD - 0.005, 1.002)
-ax.set_xlim(right=frontier['total_s'].max() + 2)
+ax.scatter(df['total_s'], df['jaccard'], c='#AAAAAA', s=55, alpha=0.55,
+           label=f'Evaluated ({len(df)} points)', zorder=2)
+ax.plot(frontier['total_s'], frontier['jaccard'], 'o-', color='#D62839',
+        linewidth=2, markersize=9, label='Pareto frontier', zorder=3)
+ax.axhline(y=JACCARD_THRESHOLD, color='#d4a34a', linestyle='--', linewidth=1.5,
+           label=f'{JACCARD_THRESHOLD} Jaccard floor (grid pruned below)')
+ax.set_ylim(JACCARD_THRESHOLD - 0.004, 1.0005)
+ax.set_xlim(right=df['total_s'].max() + 2)
 ax.set_xlabel('Total Time (s)', fontsize=12)
-ax.set_ylabel('Jaccard Index (vs safe baseline)', fontsize=12)
-ax.set_title('Pareto Frontier: Speed vs Accuracy', fontsize=14, fontweight='bold')
-ax.legend(fontsize=10)
+ax.set_ylabel('Jaccard Index (vs stride=1 ground truth)', fontsize=12)
+ax.set_title(f'All {len(df)} Points', fontsize=12, fontweight='bold')
+ax.legend(fontsize=9, loc='lower right')
 ax.grid(True, alpha=0.3)
+
+ax2.plot(frontier['total_s'], frontier['safe_only'], 'o-', color='#D62839',
+         linewidth=2, markersize=9, zorder=3)
+for _, r in frontier.iterrows():
+    ax2.annotate(f"s{r['step_s']:.4g} g{r['knot_gap_s']:.0f} c{r['cell_km']:.0f}",
+                 (r['total_s'], r['safe_only']), textcoords='offset points',
+                 xytext=(7, 3), fontsize=8, color='#D62839')
+ax2.set_yscale('log')
+ax2.set_xlim(right=frontier['total_s'].max() + 2.5)
+ax2.set_xlabel('Total Time (s)', fontsize=12)
+ax2.set_ylabel('Missed events (log scale)', fontsize=12)
+ax2.set_title('Frontier Only, Missed Events', fontsize=12, fontweight='bold')
+ax2.grid(True, alpha=0.3, which='both')
+
+fig.suptitle('Pareto Frontier: Speed vs Accuracy', fontsize=14, fontweight='bold')
 plt.tight_layout()
 plt.savefig('1_pareto_frontier.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-# Plot 2 - Frontier parameter evolution as Jaccard decreases
-f = frontier.sort_values('jaccard', ascending=False).reset_index(drop=True)
-
+# 2 - which knob the frontier trades as it gives up accuracy
 fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
-
-ax1.plot(f['jaccard'], f['step_ratio'], 'o-', color='#2ca02c', markersize=8, linewidth=2)
-ax1.set_ylabel('Step Ratio', fontsize=12)
+for ax, col, colour, ylabel in ((ax1, 'step_s', '#2ca02c', 'Step Size (s)'),
+                                (ax2, 'knot_gap_s', '#e377c2', 'Knot Gap (s)'),
+                                (ax3, 'cell_km', '#17becf', 'Cell Size (km)')):
+    ax.plot(frontier['jaccard'], frontier[col], 'o-', color=colour, markersize=8, linewidth=2)
+    ax.set_ylabel(ylabel, fontsize=12)
+    ax.grid(True, alpha=0.3)
+    ax.invert_xaxis()
 ax1.set_title('Pareto Frontier: Parameter Evolution as Jaccard Decreases', fontsize=14, fontweight='bold')
-ax1.grid(True, alpha=0.3)
-ax1.invert_xaxis()
-
-ax2.plot(f['jaccard'], f['interp_stride'], 'o-', color='#e377c2', markersize=8, linewidth=2)
-ax2.set_ylabel('Interpolation Stride', fontsize=12)
-ax2.grid(True, alpha=0.3)
-ax2.invert_xaxis()
-
-ax3.plot(f['jaccard'], f['cell_ratio'], 'o-', color='#17becf', markersize=8, linewidth=2)
 ax3.set_xlabel('Jaccard Index', fontsize=12)
-ax3.set_ylabel('Cell Ratio', fontsize=12)
-ax3.grid(True, alpha=0.3)
-ax3.invert_xaxis()
-
-for ax in [ax1, ax2, ax3]:
-    ax.axvline(x=JACCARD_THRESHOLD, color='#FF9900', linestyle='--', alpha=0.7)
-
 plt.tight_layout()
 plt.savefig('2_frontier_parameters.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-# Plot 3 - Line per component along Pareto frontier
-markers = ['^', 'd', 'D', 'x', 'v', 'p', '*']
-x_jac = f['jaccard'].values
+# 3 - line per component along the frontier
 fig, ax = plt.subplots(figsize=(12, 7))
-for col, color, marker, label in zip(timing_columns, colors, markers, labels):
-    ax.plot(x_jac, f[col], marker=marker, linestyle='-', label=label,
-            color=color, linewidth=2, markersize=8)
+for col, colour, marker, label in zip(timing_columns, colors, markers, labels):
+    ax.plot(frontier['jaccard'], frontier[col], marker=marker, linestyle='-',
+            label=label, color=colour, linewidth=2, markersize=8)
 ax.invert_xaxis()
 ax.set_xlabel('Jaccard Index', fontsize=12)
 ax.set_ylabel('Time (s)', fontsize=12)
@@ -119,10 +110,10 @@ plt.tight_layout()
 plt.savefig('3_time_breakdown.png', dpi=300, bbox_inches='tight')
 plt.close()
 
-# Plot 4 - Stacked area along Pareto frontier
+# 4 - stacked area along the frontier
 fig, ax = plt.subplots(figsize=(12, 7))
-y_stack = np.vstack([f[col].values for col in timing_columns])
-ax.stackplot(x_jac, y_stack, labels=labels, colors=colors, alpha=0.8)
+ax.stackplot(frontier['jaccard'], np.vstack([frontier[c].values for c in timing_columns]),
+             labels=labels, colors=colors, alpha=0.8)
 ax.invert_xaxis()
 ax.set_xlabel('Jaccard Index', fontsize=12)
 ax.set_ylabel('Time (s)', fontsize=12)
@@ -131,47 +122,4 @@ ax.legend(fontsize=8, loc='upper left', ncol=2)
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig('4_time_breakdown_stacked.png', dpi=300, bbox_inches='tight')
-plt.close()
-
-# Plot 5 - Jaccard heatmaps over (stride, cell_ratio), faceted by step_ratio.
-# Drop step_ratios where pruning fired immediately and zero valid configs were found -
-# they're just an empty panel that stretches the layout.
-valid_step_ratios = sorted(
-    sr for sr in df['step_ratio'].unique()
-    if (df[(df['step_ratio'] == sr) & (df['jaccard'] >= JACCARD_THRESHOLD)]).shape[0] > 0
-)
-strides = sorted(df['interp_stride'].unique())
-cell_ratios = sorted(df['cell_ratio'].unique())
-
-n = len(valid_step_ratios)
-ncols = min(n, 3)
-nrows = int(np.ceil(n / ncols))
-fig, axes = plt.subplots(nrows, ncols, figsize=(6 * ncols, 5 * nrows), squeeze=False)
-
-HEATMAP_VMIN = 0.97
-norm = matplotlib.colors.TwoSlopeNorm(
-    vmin=HEATMAP_VMIN, vcenter=JACCARD_THRESHOLD, vmax=1.0)
-
-for idx, sr in enumerate(valid_step_ratios):
-    ax = axes[idx // ncols][idx % ncols]
-    sub = df[df['step_ratio'] == sr]
-    grid = (sub.pivot(index='cell_ratio', columns='interp_stride', values='jaccard')
-                .reindex(index=cell_ratios, columns=strides))
-    im = ax.imshow(grid.values, origin='lower', aspect='auto',
-                   cmap='RdYlGn', norm=norm,
-                   extent=(strides[0] - 2.5, strides[-1] + 2.5,
-                           cell_ratios[0] - 0.05, cell_ratios[-1] + 0.05))
-    ax.set_xticks(strides[::2])
-    ax.set_yticks(cell_ratios[::2])
-    ax.set_xlabel('Interpolation Stride', fontsize=12)
-    ax.set_ylabel('Cell Ratio', fontsize=12)
-    ax.set_title(f'step_ratio = {sr}', fontsize=12, fontweight='bold')
-
-for idx in range(n, nrows * ncols):
-    axes[idx // ncols][idx % ncols].axis('off')
-
-cbar = fig.colorbar(im, ax=axes, shrink=0.85, pad=0.02, extend='min')
-cbar.set_label('Jaccard')
-fig.suptitle('Jaccard Index Across Parameter Space', fontsize=14, fontweight='bold')
-plt.savefig('5_parameter_heatmap.png', dpi=300, bbox_inches='tight')
 plt.close()

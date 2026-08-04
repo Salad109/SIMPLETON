@@ -20,6 +20,7 @@ final class EventMatcher {
         Set<EventKey> claimed = new HashSet<>();
         int matched = 0;
         int oursOnly = 0;
+        List<Double> missErrorsM = new ArrayList<>();
         for (EventKey c : candidate) {
             List<EventKey> bucket = safeByPair.get(c.pair());
             if (bucket == null) {
@@ -32,11 +33,20 @@ final class EventMatcher {
             } else {
                 claimed.add(best);
                 matched++;
+                missErrorsM.add(Math.abs(c.distanceKm() - best.distanceKm()) * 1000.0);
             }
         }
 
         int safeOnly = safe.size() - matched;
-        return new MatchStats(matched, oursOnly, safeOnly);
+        missErrorsM.sort(null);
+        return new MatchStats(matched, oursOnly, safeOnly,
+                percentile(missErrorsM, 0.50), percentile(missErrorsM, 0.99));
+    }
+
+    private static double percentile(List<Double> sorted, double q) {
+        if (sorted.isEmpty()) return 0.0;
+        int idx = (int) Math.min(Math.round(q * (sorted.size() - 1)), sorted.size() - 1L);
+        return sorted.get(idx);
     }
 
     private static EventKey findNearestUnclaimed(List<EventKey> bucket, OffsetDateTime target,
@@ -55,7 +65,7 @@ final class EventMatcher {
         return best;
     }
 
-    record MatchStats(int matched, int oursOnly, int safeOnly) {
+    record MatchStats(int matched, int oursOnly, int safeOnly, double missErrorMedianM, double missErrorP99M) {
         double jaccard() {
             int union = matched + oursOnly + safeOnly;
             return union == 0 ? 1.0 : matched / (double) union;

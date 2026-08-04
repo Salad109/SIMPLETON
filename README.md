@@ -9,10 +9,10 @@ All-vs-all satellite conjunction screener. Scans the full public catalog (~30,00
 in under 30 seconds on consumer hardware.
 
 Validated against [CelesTrak SOCRATES](https://celestrak.org/SOCRATES/): when filtered to equivalent scope
-(payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.8% of SOCRATES events
-are also flagged by this pipeline, with median TCA agreement under 1 ms and median miss distance of 0.5 m - see
-[Validation](#validation) below for the breakdown. Full all-vs-all screening finds ~44,000 conjunctions per 24h
-window, including secondary pairs that SOCRATES excludes.
+(payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.8% of SOCRATES events are
+also flagged by this pipeline, with median TCA agreement under 1 ms and median miss distance of 0.1 m - see
+[Validation](#validation) below for the breakdown. Full all-vs-all screening finds ~58,000 conjunctions per 24h window,
+including secondary pairs that SOCRATES excludes.
 
 Backtested against the 2009 Iridium 33 / Cosmos 2251 collision and the 1996 CERISE / Ariane debris collision. The
 pipeline flags both events with 10 and 7 ms TCA accuracy respectively.
@@ -23,20 +23,19 @@ pipeline flags both events with 10 and 7 ms TCA accuracy respectively.
 | Propagator       | SGP4 (Orekit)                                | SGP4 (STK)               |
 | Window           | 24h (configurable)                           | 7 days                   |
 | Threshold        | 5 km (configurable)                          | 5 km                     |
-| Scope            | All-vs-all (~450M pairs)                     | Primaries vs secondaries |
-| 24h conjunctions | ~44,000 (~19,000 filtered to SOCRATES scope) | ~19,000                  |
-| Compute time     | ~24 seconds (~3,600x realtime)               | ~10 hours (17x realtime) |
+| Scope            | All-vs-all (~500M pairs)                     | Primaries vs secondaries |
+| 24h conjunctions | ~58,000 (~19,000 filtered to SOCRATES scope) | ~19,000                  |
+| Compute time     | ~27 seconds (~3,200x realtime)               | ~10 hours (17x realtime) |
 
 ## Why It Matters
 
-Full-catalog screening in under 30 seconds is not the point. Screening accuracy is capped by public TLE quality, 
-so out-speeding other screeners on the same data doesn't add anything. The value is what cheap screening unlocks.
+Full-catalog screening in under 30 seconds is not the point. Screening accuracy is capped by public TLE quality, so
+out-speeding other screeners on the same data doesn't add anything. The value is what cheap screening unlocks.
 
-For example, collision-avoidance maneuver planning. Dodging one conjunction can steer a satellite into
-several new ones, so finding a burn that clears the threat without creating worse ones means screening the whole
-catalog against each candidate maneuver. At seconds per scan, a brute-force sweep of hundreds of candidate burns is
-actually feasible. It's just a matter of adding "phantom" candidate satellites to the catalog before running the
-detection pipeline.
+For example, collision-avoidance maneuver planning. Dodging one conjunction can steer a satellite into several new ones,
+so finding a burn that clears the threat without creating worse ones means screening the whole catalog against each
+candidate maneuver. At seconds per scan, a brute-force sweep of hundreds of candidate burns is actually feasible. It's
+just a matter of adding "phantom" candidate satellites to the catalog before running the detection pipeline.
 
 It could also help with debris-removal target selection and launch-window screening.
 
@@ -47,8 +46,8 @@ The detection pipeline has four stages:
 ### 1. Propagation (SGP4 + Hermite interpolation)
 
 Rather than calling SGP4 at every timestep, the propagator stage evaluates SGP4 at knot points spaced minutes apart and
-fills intermediate positions using cubic Hermite interpolation on position and velocity. This cuts expensive SGP4 calls
-by up to 70x with negligible accuracy loss.
+fills intermediate positions using cubic Hermite interpolation on position and velocity. At the recommended 346 s knot
+gap that is one real SGP4 call per 32 steps, for 4 missed events out of ~58,000.
 
 ### 2. Coarse sweep (spatial grid indexing)
 
@@ -62,7 +61,7 @@ event.
 
 ### 4. Refinement
 
-Between two interpolated timesteps (~9 seconds apart), relative motion is effectively linear, so squared distance is
+Between two interpolated timesteps (~11 seconds apart), relative motion is effectively linear, so squared distance is
 quadratic, therefore the minimum of a quadratic is just one division. No golden section, no Brent's method, no iterative
 SGP4 calls. Most candidates get discarded here because the analytical minimum exceeds the 5 km threshold. Only survivors
 get a single SGP4 call to confirm. Events that pass are scored with collision probability synthesized from empirical
@@ -71,23 +70,23 @@ SGP4 error models.
 ## Validation
 
 Both pipelines were run on the same TLE catalog over the same 7-day window with matching scoping filters
-(primary-vs-all, intra-constellation excluded, formation-flight excluded). Events match when both pipelines flag
-the same satellite pair with TCAs within 1 minute.
+(primary-vs-all, intra-constellation excluded, formation-flight excluded). Events match when both pipelines flag the
+same satellite pair with TCAs within 1 minute.
 
 | Events         |   Count |
 |----------------|--------:|
 | SOCRATES total | 134,598 |
-| Our total      | 134,648 |
-| Matched        | 134,263 |
-| Ours only      |     385 |
-| Missed         |     335 |
+| Our total      | 134,765 |
+| Matched        | 134,369 |
+| Ours only      |     396 |
+| Missed         |     229 |
 
 99.8% of SOCRATES events are also flagged by this pipeline. 99.7% of this pipeline's events are also flagged by
 SOCRATES. Agreement is flat at 99.5%+ across all seven days.
 
 ![ΔTCA and Δmiss-distance error distributions vs SOCRATES](docs/8-socrates-comparison/1_errors.png)
 
-On matched events, TCA agrees to 9 ms and miss distance to 5 m at p95.
+On matched events, TCA agrees to 3 ms and miss distance to 4 m at p95.
 
 Methodology, TLE replication procedure, and analysis of the remaining 0.2% available
 at [docs/8](docs/8-socrates-comparison).
@@ -95,29 +94,30 @@ at [docs/8](docs/8-socrates-comparison).
 ## Parameter Tuning
 
 The [docs/](docs) directory contains experiments from benchmarking each tunable parameter. Individually safe choices
-compound in complex ways when combined, so the Pareto analysis sweeps all parameters simultaneously.
+interact when combined, so the Pareto analysis sweeps all parameters simultaneously to find winning combinations.
 
-| # | Experiment                                            | Description                                        |
-|---|-------------------------------------------------------|----------------------------------------------------|
-| 1 | [Step Ratio](docs/1-step-ratio)                       | Time step size                                     |
-| 2 | [Interpolation Stride](docs/2-interpolation-stride)   | SGP4 calls per time step via interpolation spacing |
-| 3 | [Cell Ratio](docs/3-cell-ratio)                       | Spatial grid cell size                             |
-| 4 | [Conjunction Tolerance](docs/4-conjunction-tolerance) | Coarse scan distance threshold in km               |
-| 5 | [Pareto Frontier](docs/5-pareto-frontier)             | All parameters simultaneously                      |
-| 6 | [Garbage Collector](docs/6-gc)                        | GC impact on pipeline throughput                   |
-| 7 | [Subwindow Count](docs/7-subwindow-count)             | Memory partitioning for peak heap reduction        |
+| # | Experiment                                            | Description                                 |
+|---|-------------------------------------------------------|---------------------------------------------|
+| 1 | [Step Size](docs/1-step-size)                         | Coarse scan time step in seconds            |
+| 2 | [Knot Gap](docs/2-knot-gap)                           | Seconds between real SGP4 calls             |
+| 3 | [Cell Size](docs/3-cell-size)                         | Spatial grid cell edge in km                |
+| 4 | [Conjunction Tolerance](docs/4-conjunction-tolerance) | Coarse scan distance threshold in km        |
+| 5 | [Pareto Frontier](docs/5-pareto-frontier)             | All parameters simultaneously               |
+| 6 | [Garbage Collector](docs/6-gc)                        | GC impact on pipeline throughput            |
+| 7 | [Subwindow Count](docs/7-subwindow-count)             | Memory partitioning for peak heap reduction |
 
 Selected Pareto-optimal configurations:
 
-| Step ratio | Stride | Cell ratio | Cell (km) | Jaccard    | Coverage   | Fabrication | Time    |
-|------------|--------|------------|-----------|------------|------------|-------------|---------|
-| 9          | 30     | 1.3        | 55.4      | 1.0000     | 1.0000     | 0.0000      | 31s     |
-| 8          | 40     | 1.1        | 65.5      | 0.9999     | 0.9999     | 0.0000      | 26s     |
-| **8**      | **50** | **1.3**    | **55.4**  | **0.9986** | **0.9987** | **0.0000**  | **24s** |
-| 8          | 50     | 1.5        | 48.0      | 0.9948     | 0.9948     | 0.0000      | 23s     |
-| 7          | 45     | 1.3        | 55.4      | 0.9803     | 0.9804     | 0.0000      | 22s     |
+| Step (s) | Knot gap | Cell (km) | Stride | Jaccard     | Missed | Time    |
+|----------|----------|-----------|--------|-------------|--------|---------|
+| 9.375    | 197s     | 66.5      | 21     | 0.99993     | 2      | 34s     |
+| 10.0     | 250s     | 71.5      | 25     | 0.99990     | 3      | 31s     |
+| **10.8** | **346s** | **74.0**  | **32** | **0.99988** | **4**  | **27s** |
+| 10.8     | 454s     | 71.5      | 42     | 0.99945     | 29     | 25s     |
+| 10.8     | 454s     | 64.0      | 42     | 0.99861     | 78     | 25s     |
+| 10.8     | 605s     | 54.0      | 56     | 0.98733     | 737    | 23s     |
 
-Default configuration (bold) is a good compromise, trading 0.14% Jaccard for a 1.3x speedup over the safest option.
+Default configuration (bold) is a good compromise, sitting right before the accuracy cliff.
 
 ## Tech Stack
 

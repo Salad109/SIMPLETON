@@ -58,22 +58,22 @@ closest approach are within 1 minute of each other.
 | Events                                   |   Count |                                         |
 |------------------------------------------|--------:|----------------------------------------:|
 | SOCRATES total                           | 134,598 |                                         |
-| Our total                                | 134,648 |                                         |
-| Matched (both flagged the same event)    | 134,263 |                                         |
-| Ours only (we flagged, SOCRATES did not) |     385 | **99.7%** of ours SOCRATES also flagged |
-| SOCRATES only (they flagged, we did not) |     335 |      **99.8%** of SOCRATES we also flag |
+| Our total                                | 134,765 |                                         |
+| Matched (both flagged the same event)    | 134,369 |                                         |
+| Ours only (we flagged, SOCRATES did not) |     396 | **99.7%** of ours SOCRATES also flagged |
+| SOCRATES only (they flagged, we did not) |     229 |      **99.8%** of SOCRATES we also flag |
 
 ## Physics agreement on matched events
 
-For the 134,263 events both pipelines flag:
+For the 134,369 events both pipelines flag:
 
 |               Quantity | Median |    p95 |
 |-----------------------:|-------:|-------:|
-|               ΔTCA (s) |  0.000 |  0.009 |
-|    Δmiss-distance (km) | 0.0005 | 0.0053 |
+|               ΔTCA (s) |  0.000 |  0.003 |
+|    Δmiss-distance (km) | 0.0001 | 0.0041 |
 | Δrelative-speed (km/s) |     ~0 | 0.0005 |
 
-TCA agrees to **9 ms** and miss distance to **5 m** at p95.
+TCA agrees to **3 ms** and miss distance to **4 m** at p95.
 
 ![ΔTCA and Δmiss-distance error distributions](1_errors.png)
 
@@ -81,13 +81,13 @@ TCA agrees to **9 ms** and miss distance to **5 m** at p95.
 
 | Day | SOCRATES |   Ours | Matched | % of ours SOCRATES flagged | % of SOCRATES we flagged |
 |----:|---------:|-------:|--------:|---------------------------:|-------------------------:|
-|   1 |   19,283 | 19,242 |  19,215 |                      99.9% |                    99.6% |
-|   2 |   19,242 | 19,262 |  19,192 |                      99.6% |                    99.7% |
-|   3 |   19,079 | 19,102 |  19,040 |                      99.7% |                    99.8% |
-|   4 |   19,527 | 19,503 |  19,477 |                      99.9% |                    99.7% |
-|   5 |   19,258 | 19,294 |  19,216 |                      99.6% |                    99.8% |
-|   6 |   19,005 | 19,058 |  18,972 |                      99.5% |                    99.8% |
-|   7 |   19,204 | 19,187 |  19,151 |                      99.8% |                    99.7% |
+|   1 |   19,283 | 19,253 |  19,225 |                      99.9% |                    99.7% |
+|   2 |   19,242 | 19,269 |  19,196 |                      99.6% |                    99.8% |
+|   3 |   19,079 | 19,126 |  19,063 |                      99.7% |                    99.9% |
+|   4 |   19,527 | 19,520 |  19,494 |                      99.9% |                    99.8% |
+|   5 |   19,258 | 19,310 |  19,228 |                      99.6% |                    99.8% |
+|   6 |   19,005 | 19,074 |  18,987 |                      99.5% |                    99.9% |
+|   7 |   19,204 | 19,213 |  19,176 |                      99.8% |                    99.9% |
 
 Agreement is flat at 99.5%+ across all seven days.
 
@@ -95,17 +95,17 @@ Agreement is flat at 99.5%+ across all seven days.
 
 ![Missed SOCRATES events by their reported miss distance](2_missed_miss_distance.png)
 
-335 SOCRATES events have no match in our catalog, and 385 of our events aren't present in SOCRATES's. The histograms
+229 SOCRATES events have no match in our catalog, and 396 of our events aren't present in SOCRATES's. The histograms
 plot their SOCRATES-reported miss distance and relative velocity. The spike against the 5 km wall is the
 boundary-disagreement bucket: SOCRATES says just under 5 km, our system says just over, and the event is skipped. The
-velocity panel shows a second spike near zero: 101 missed events sit below 340 m/s, a long tail of slow co-orbiting
-pairs that survived the 10 m/s formation-flight filter.
+velocity panel shows a second spike near zero: 106 missed events sit below 325 m/s, a cluster of slow co-orbiting pairs
+that survived the 10 m/s formation-flight filter.
 
 SOCRATES uses a hand-curated list for both primary-vs-all screening and intra-fleet exclusion; their provided
 `active.txt` is a broader proxy that retains decommissioned constellation members SOCRATES itself treats as non-primary.
-Proof: `socrates.csv` itself contains ~10k Starlink-Starlink and ~750 OneWeb-OneWeb conjunctions. If their rule were
-"drop all same-fleet pairs" those counts would be zero. Therefore, the survivors must be pairs where at least one side
-is a decommissioned constellation member SOCRATES no longer treats as primary. That sub-list isn't public.
+Proof: `socrates.csv` itself contains 10,175 Starlink-Starlink conjunctions, plus 16 OneWeb and 5 Kuiper. If their rule
+were "drop all same-fleet pairs" those counts would be zero. Therefore, the survivors must be pairs where at least one
+side is a decommissioned constellation member SOCRATES no longer treats as primary. That sub-list isn't public.
 
 ## Inputs (regenerable)
 
@@ -115,5 +115,3 @@ is a decommissioned constellation member SOCRATES no longer treats as primary. T
 - ours.csv: `./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-socrates`
 - active.txt: https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
 - satellite_names.csv: `\copy (select norad_cat_id, object_name from satellite) to stdout csv header`
-
-TODO RERUN WITHOUT SUBWINDOWING

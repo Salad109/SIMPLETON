@@ -4,12 +4,12 @@ Each GC runs the same fixed-parameter conjunction pipeline 10 times to measure t
 
 ## Parameters
 
-- **tolerance-km**: Fixed at 72 km
-- **step-ratio**: Fixed at 8
-- **interpolation-stride**: Fixed at 50
-- **cell-ratio**: Fixed at 1.30
-- **lookahead-hours**: Fixed at 24
-- **threshold-km**: Fixed at 5.0 km
+- **tolerance-km**: 84
+- **step-seconds**: 10.8
+- **interpolation-stride**: 32 (346 s knot gap)
+- **cell-size-km**: 74
+- **lookahead-hours**: 24
+- **threshold-km**: 5.0
 - **iterations**: 10 per GC
 - **heap**: 12 GB (-Xmx12g -Xms12g -XX:+AlwaysPreTouch)
 
@@ -17,16 +17,21 @@ Each GC runs the same fixed-parameter conjunction pipeline 10 times to measure t
 
 | GC         | Mean Time | Std Dev | Min    | Max    | Conjunctions |
 |------------|-----------|---------|--------|--------|--------------|
-| G1         | 22.46s    | 0.47s   | 22.00s | 23.21s | 43770        |
-| Parallel   | 22.70s    | 0.30s   | 22.17s | 23.08s | 43770        |
-| Shenandoah | 22.73s    | 0.22s   | 22.44s | 23.11s | 43770        |
-| Z          | 24.57s    | 0.37s   | 23.97s | 25.24s | 43770        |
+| G1         | 29.92s    | 0.79s   | 28.80s | 31.03s | 58,405       |
+| Parallel   | 29.61s    | 0.30s   | 29.16s | 30.13s | 58,405       |
+| Shenandoah | 29.23s    | 0.23s   | 28.89s | 29.73s | 58,405       |
+| Z          | 32.54s    | 0.27s   | 32.26s | 33.14s | 58,405       |
 
-All GCs detect identical conjunctions (43,770). The difference is pure runtime.
+All four detect identical conjunctions. The difference is pure runtime.
 
-G1, Parallel, and Shenandoah are effectively tied (~1% spread). ZGC is ~9% slower.
+G1, Parallel and Shenandoah span 2.3%, too close for ten samples to separate. Shenandoah is fastest on the mean and
+holds the tightest spread, 0.23s against G1's 0.79s.
 
-**Recommendation: G1.**
+ZGC is 11.3% slower than Shenandoah. The pipeline allocates in large short-lived bursts, one position cache per
+subwindow, then drops the whole thing. Generational copying collectors handle that shape well, while ZGC's concurrent
+machinery is built to keep pause times down, which is not the constraint here.
+
+**Recommendation: G1**, the default, since nothing beat it decisively enough to justify pinning an alternative.
 
 ![Total Processing Time](1_total_time.png)
 

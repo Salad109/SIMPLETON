@@ -81,9 +81,9 @@
                     <div class="slider-head">
                         <label for="tolerance"><code>tolerance-km</code>: coarse-scan distance threshold; pairs whose
                             center-to-center distance falls below this are flagged for refinement.</label>
-                        <span class="slider-val" id="tolerance-val">72.0</span>
+                        <span class="slider-val" id="tolerance-val">84.0</span>
                     </div>
-                    <input id="tolerance" max="200" min="5" step="0.1" type="range" value="72">
+                    <input id="tolerance" max="200" min="5" step="0.1" type="range" value="84">
                 </div>
 
                 <div class="slider-row">
@@ -91,18 +91,18 @@
                         <label for="cell-size"><code>cell-size-km</code>: spatial grid cell edge. Smaller cells mean
                             fewer candidates per cell, but cells smaller than the tolerance can leave a close pair
                             sitting in non-adjacent cells and never compared.</label>
-                        <span class="slider-val" id="cell-size-val">55.38</span>
+                        <span class="slider-val" id="cell-size-val">74.0</span>
                     </div>
-                    <input id="cell-size" max="120" min="5" step="0.01" type="range" value="55.38">
+                    <input id="cell-size" max="120" min="5" step="0.1" type="range" value="74.0">
                 </div>
 
                 <div class="slider-row">
                     <div class="slider-head">
                         <label for="step-seconds"><code>step-seconds</code>: time interval between successive position
                             checks. Smaller steps catch fast approaches but multiply propagation work.</label>
-                        <span class="slider-val" id="step-seconds-val">9.0</span>
+                        <span class="slider-val" id="step-seconds-val">10.8</span>
                     </div>
-                    <input id="step-seconds" max="60" min="1" step="0.1" type="range" value="9">
+                    <input id="step-seconds" max="60" min="1" step="0.1" type="range" value="10.8">
                 </div>
 
                 <div class="slider-row">
@@ -110,9 +110,9 @@
                         <label for="stride"><code>interpolation-stride</code>: one real SGP4 call per N steps;
                             intermediate positions are filled in by Hermite cubic interpolation on position and velocity
                             at each knot.</label>
-                        <span class="slider-val" id="stride-val">50</span>
+                        <span class="slider-val" id="stride-val">32</span>
                     </div>
-                    <input id="stride" max="100" min="1" step="1" type="range" value="50">
+                    <input id="stride" max="100" min="1" step="1" type="range" value="32">
                 </div>
             </div>
         </div>

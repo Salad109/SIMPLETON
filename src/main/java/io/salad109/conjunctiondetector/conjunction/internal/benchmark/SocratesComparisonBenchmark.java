@@ -125,14 +125,14 @@ public class SocratesComparisonBenchmark implements CommandLineRunner {
                 .map(collisionProbabilityService::computeProbabilityAndBuild)
                 .toList();
         log.info("Threshold {} km -> {} conjunctions", THRESHOLD_KM, conjunctions.size());
-        writeCsv(conjunctions, OUTPUT_DIR.resolve(OUTPUT_NAME));
+        writeConjunctionCsv(conjunctions, OUTPUT_DIR.resolve(OUTPUT_NAME));
 
         total.stop();
         log.info("SOCRATES comparison run complete in {}ms", total.getTime());
         System.exit(0);
     }
 
-    private void writeCsv(List<Conjunction> conjunctions, Path outputPath) {
+    private void writeConjunctionCsv(List<Conjunction> conjunctions, Path outputPath) {
         DateTimeFormatter tcaFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
         StringBuilder sb = new StringBuilder();
         sb.append("norad1,norad2,tca,miss_distance_km,relative_speed_km_s,collision_probability\n");
