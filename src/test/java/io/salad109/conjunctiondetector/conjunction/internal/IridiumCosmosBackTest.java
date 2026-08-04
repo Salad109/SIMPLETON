@@ -88,10 +88,10 @@ class IridiumCosmosBackTest {
     @Test
     void fullPipelineDetectsCollision() {
 
-        double toleranceKm = 72.0;
-        double cellSizeKm = 48.0;
-        double stepSeconds = 9;
-        int interpolationStride = 50;
+        double toleranceKm = 84.0;
+        double cellSizeKm = 74.0;
+        double stepSeconds = 10.8;
+        int interpolationStride = 32;
         double thresholdKm = 5.0;
 
         List<SatelliteScanInfo> satellites = List.of(iridium(), cosmos());
@@ -99,7 +99,7 @@ class IridiumCosmosBackTest {
 
         // Propagate and interpolate
         OffsetDateTime startTime = COLLISION_TIME.minusHours(1);
-        OffsetDateTime endTime = startTime.plusHours(1);
+        OffsetDateTime endTime = COLLISION_TIME.plusHours(1);
         PropagationService.KnotCache knots = propagationService.computeKnots(
                 propagators, startTime, endTime, stepSeconds, interpolationStride);
         PropagationService.PositionCache cache = propagationService.interpolate(knots);
