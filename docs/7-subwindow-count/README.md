@@ -36,11 +36,10 @@ intervals in 8000, or 0.04%.
 ## Duplicates
 
 Two things put a redundant row on a pair: an approach landing on a shared boundary step gets stored by both subwindows,
-and a pair within tolerance for the whole window yields one conjunction in every subwindow. A scan of 31,665 objects
-storing 67,684 conjunctions had 224 redundant rows, or 0.33%. Formation flight accounts for almost all of them. 73 pairs
-stayed within 0.49 km of each other at under 1.1 m/s relative for the entire window, so every subwindow found them and
-each produced exactly 4 conjunctions. Only 5 rows came from a shared boundary, pairs recorded twice with TCAs under a
-minute apart. Multiple conjunctions per pair are allowed, so these are harmless.
+and a pair within tolerance for the whole window yields one conjunction in every subwindow. Screening one window as a
+single pass and again as four subwindows gives 264 redundant rows, or 0.45%. Formation flight accounts for almost all
+of them; 90 of the 94 pairs that gain a row close at under 10 m/s, and exactly 1 row comes from a shared boundary step.
+Multiple conjunctions per pair are allowed, so these are harmless.
 
 ## Step alignment
 

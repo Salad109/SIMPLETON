@@ -9,6 +9,7 @@ instant becomes a candidate for refinement.
 - **knot gap**: 197 s
 - **threshold-km**: 5.0, **lookahead**: 24 h
 - **iterations**: 5 per configuration
+- **catalog**: 31,665 objects (element sets at most 10 days old, median age 8.7 h), one 24 h pass from 2026-08-03T18:00Z
 
 ## Results
 

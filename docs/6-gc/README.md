@@ -12,6 +12,7 @@ Each GC runs the same fixed-parameter conjunction pipeline 10 times to measure t
 - **threshold-km**: 5.0
 - **iterations**: 10 per GC
 - **heap**: 12 GB (-Xmx12g -Xms12g -XX:+AlwaysPreTouch)
+- **catalog**: 31,665 objects (element sets at most 10 days old, median age 8.7 h), one 24 h pass from 2026-08-03T18:00Z
 
 ## Results
 

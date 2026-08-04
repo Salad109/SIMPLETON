@@ -8,7 +8,7 @@ sweeps all three simultaneously using a bounded grid search to find the Pareto f
 
 - 31,665-object catalog, 24 h lookahead, 84 km tolerance, 5 km collision threshold
 - Ground truth: `stride=1` at step 9.375 s, cell 105 km. Deliberately safe defaults.
-- 3 iterations per config, median time
+- 3 iterations per config, median time; the full 497-point search ran 9 h 12 min
 - Steps 9.375 / 10.0 / 10.8 / 12.0 s, knot gap 150 to 700 s in 50 s steps, cell size 84 down to 44 km in 2.5 km steps
 - **Jaccard** = `matched / (matched + ours_only + safe_only)`, matched by NORAD pair and TCA within 60 s
 
@@ -49,12 +49,12 @@ those costs add:
 |--------------------|-------:|
 | Neither loosened   |      4 |
 | Gap only, 497 s    |     34 |
-| Cell only, 56.5 km |    285 |
-| Added              |    315 |
+| Cell only, 56.5 km |    287 |
+| Added              |    317 |
 | Measured together  |    314 |
 
 This holds across the grid. Predicting any configuration's missed count by adding the cost of each loosened parameter
-separately is exact for 348 of the 496 points.
+separately is exact for 348 of the 497 points.
 
 Step size and cell size are not two independent settings. `docs/1` derives the closing speed below which a pair is
 guaranteed to be sampled while still inside the tolerance sphere:
@@ -71,16 +71,17 @@ appear in it, so what decides accuracy is the value the two produce together. Th
 | 61.5 km | 10.8s  | 10.5 km/s |    116 |
 
 The first two share a cell size and are 5.3x apart. The first and third have neither cell size nor step in common, share
-only a `v_guar`, and are 29% apart. Across the whole grid two configurations sharing a cell size typically differ by 6x,
-and two sharing a `v_guar` by 13%.
+only a `v_guar`, and are 29% apart. Across the whole grid, pairing configurations at the same knot gap, two sharing a
+cell size but not a step typically differ by 1.7x in missed events, and two sharing a `v_guar` by 13%.
 
 The knot gap does not appear in `v_guar`, and it causes misses a different way. Cell size and step decide whether a
 close pair is compared at all. The gap decides how far the interpolated positions have drifted from real SGP4 when that
 comparison happens.
 
 The three parameters therefore act through two error sources. Interpolation error follows the knot gap. Grid capture
-follows `v_guar`, which step size and cell size set jointly. Both stay in the noise while `v_guar` is above roughly 12
-km/s and the gap is under roughly 450 s.
+follows `v_guar`, which step size and cell size set jointly. The equivalence has a limit: `v_guar` is a worst-case
+bound, and the loss above it grows with the step. The only 12.0 s configuration to survive pruning misses 788 events at
+a `v_guar` of 13.2 km/s, where every shorter-step configuration sits in the noise.
 
 ## Fabrication
 

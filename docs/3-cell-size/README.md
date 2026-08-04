@@ -7,9 +7,10 @@ cells test more pairs per step and catch more, but smaller cells are cheaper.
 ## Parameters
 
 - **tolerance-km**: 84, **step-seconds**: 9.375
-- **knot gap**: 200 s
+- **knot gap**: 197 s
 - **threshold-km**: 5.0, **lookahead**: 24 h
 - **iterations**: 5 per configuration
+- **catalog**: 31,665 objects (element sets at most 10 days old, median age 8.7 h), one 24 h pass from 2026-08-03T18:00Z
 
 ## Results
 

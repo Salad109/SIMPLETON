@@ -9,6 +9,7 @@ at both ends. The **knot gap** is the spacing between those SGP4 calls in second
 - **tolerance-km**: 84, **step-seconds**: 9.375, **cell-size-km**: 70
 - **threshold-km**: 5.0, **lookahead**: 24 h
 - **iterations**: 5 per configuration
+- **catalog**: 31,665 objects (element sets at most 10 days old, median age 8.7 h), one 24 h pass from 2026-08-03T18:00Z
 
 ## Results
 
@@ -49,6 +50,11 @@ gaps to 3.2 km at 1000 s, because `refine` fits its analytical minimum to interp
 
 When the interpolation is completely wrong the analytical minimum lands outside the 6.5 km gate and the event is
 discarded before SGP4 is ever called.
+
+The median plateau near 220 m in `5_miss_error.png` is an artifact of the metric, not a bound on the error. Miss error
+covers matched events only, and an event matches only if both runs put it within 5 km, so no matched event can differ by
+more than that. The worst-interpolated events are the ones pushed past the threshold and dropped, so the statistic
+saturates.
 
 ![Total Processing Time](1_total_time.png)
 
