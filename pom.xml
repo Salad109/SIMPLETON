@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>4.1.0</version>
+        <version>4.1.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.salad109</groupId>
@@ -106,7 +106,7 @@
         <dependency>
             <groupId>org.orekit</groupId>
             <artifactId>orekit</artifactId>
-            <version>13.1.7</version>
+            <version>13.1.8</version>
         </dependency>
 
         <dependency>
@@ -161,7 +161,7 @@
             <dependency>
                 <groupId>org.springframework.modulith</groupId>
                 <artifactId>spring-modulith-bom</artifactId>
-                <version>2.1.0</version>
+                <version>2.1.1</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -226,7 +226,7 @@
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
-                <version>1.25.9</version>
+                <version>1.30.0</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.pitest</groupId>
@@ -252,7 +252,7 @@
             <plugin>
                 <groupId>com.github.spotbugs</groupId>
                 <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>4.10.3.0</version>
+                <version>4.10.4.1</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
