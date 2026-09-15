@@ -4,6 +4,8 @@ Each subdirectory is a benchmark experiment with a writeup, CSV results, and plo
 parameter at a time. Experiment 5 sweeps all three together. Experiments 6-7 cover runtime configuration. Experiment 8
 validates the pipeline against CelesTrak's SOCRATES Plus catalog.
 
+All data was generated on an AMD Ryzen 9 5950X, 32 GB DDR4 3600MHz CL18, OpenJDK 25, Linux machine.
+
 | # | Experiment                                       | What it covers                                     |
 |---|--------------------------------------------------|----------------------------------------------------|
 | 1 | [Step Size](1-step-size)                         | Coarse scan time step in seconds                   |
