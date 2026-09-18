@@ -1,7 +1,8 @@
 # SIMPLETON
 
-**S**atellite **I**ntersection **M**onitoring **P**ipeline for **L**ocating **E**very **T**hreatening **O**rbital **N**
-eighbor
+<!-- @formatter:off -->
+**S**atellite **I**ntersection **M**onitoring **P**ipeline for **L**ocating **E**very **T**hreatening **O**rbital **N**eighbor
+<!-- @formatter:on -->
 
 [Live demo](https://simpleton.zlosnik.dev/)
 
@@ -9,8 +10,8 @@ All-vs-all satellite conjunction screener. Scans the full public catalog (~30,00
 in under 30 seconds on consumer hardware.
 
 Validated against [CelesTrak SOCRATES](https://celestrak.org/SOCRATES/): when filtered to equivalent scope
-(payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.8% of SOCRATES events are
-also flagged by this pipeline, with median TCA agreement under 1 ms and median miss distance of 0.1 m - see
+(payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.9% of SOCRATES events are
+also flagged by this pipeline, with TCA agreeing to 3 ms and miss distance to 0.7 m at p95 - see
 [Validation](#validation) below for the breakdown. Full all-vs-all screening finds ~58,000 conjunctions per 24h window,
 including secondary pairs that SOCRATES excludes.
 
@@ -76,19 +77,19 @@ same satellite pair with TCAs within 1 minute.
 | Events         |   Count |
 |----------------|--------:|
 | SOCRATES total | 134,598 |
-| Our total      | 134,765 |
-| Matched        | 134,369 |
-| Ours only      |     396 |
-| Missed         |     229 |
+| Our total      | 134,756 |
+| Matched        | 134,470 |
+| Ours only      |     286 |
+| Missed         |     128 |
 
-99.8% of SOCRATES events are also flagged by this pipeline. 99.7% of this pipeline's events are also flagged by
-SOCRATES. Agreement is flat at 99.5%+ across all seven days.
+99.9% of SOCRATES events are also flagged by this pipeline. 99.8% of this pipeline's events are also flagged by
+SOCRATES. Agreement is flat at 99.7%+ across all seven days.
 
 ![ΔTCA and Δmiss-distance error distributions vs SOCRATES](docs/8-socrates-comparison/1_errors.png)
 
-On matched events, TCA agrees to 3 ms and miss distance to 4 m at p95.
+On matched events, TCA agrees to 3 ms and miss distance to 0.7 m at p95.
 
-Methodology, TLE replication procedure, and analysis of the remaining 0.2% available
+Methodology, TLE replication procedure, and analysis of the remaining 0.1% available
 at [docs/8](docs/8-socrates-comparison).
 
 ## Parameter Tuning

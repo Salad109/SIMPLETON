@@ -9,6 +9,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import MaxNLocator
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
@@ -211,7 +212,7 @@ def time_bucket_overlap(soc, ours, window_start, bucket_hours, n_buckets):
     return df
 
 
-def plot_missed_miss_distance(missed, path):
+def plot_missed_events(missed, path):
     if missed.empty:
         return
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 5))
@@ -222,6 +223,7 @@ def plot_missed_miss_distance(missed, path):
     ax1.set_ylabel("Events", fontsize=12)
     ax1.set_title("By Reported Miss Distance", fontsize=12, fontweight="bold")
     ax1.set_xlim(0, 5)
+    ax1.yaxis.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 5, 10]))
     ax1.grid(True, alpha=0.3)
 
     vel_hi = max(15.0, float(missed["relative_speed_km_s"].max()))
@@ -231,6 +233,7 @@ def plot_missed_miss_distance(missed, path):
     ax2.set_ylabel("Events", fontsize=12)
     ax2.set_title("By Reported Relative Velocity", fontsize=12, fontweight="bold")
     ax2.set_xlim(0, vel_hi)
+    ax2.yaxis.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 5, 10]))
     ax2.grid(True, alpha=0.3)
 
     fig.suptitle("SOCRATES Events We Missed", fontsize=14, fontweight="bold")
@@ -255,7 +258,7 @@ def main():
     print(f"\nPer-day overlap")
     time_bucket_overlap(soc, ours, WINDOW_START, 24, WINDOW_HOURS // 24)
 
-    plot_missed_miss_distance(soc_un, HERE / "2_missed_miss_distance.png")
+    plot_missed_events(soc_un, HERE / "2_missed_events.png")
 
     if not matched.empty:
         print(f"\nErrors on matched events")

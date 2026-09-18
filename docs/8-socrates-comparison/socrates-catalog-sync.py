@@ -2,8 +2,10 @@
 """Reconstruct SOCRATES's TLE catalog and load it into the satellite table.
 
 socrates.csv carries DSE_1 / DSE_2 (days since each side's TLE epoch) for every conjunction.
-Per NORAD that means a target TLE epoch (TCA - DSE * 1 day). For each, pick the gp_history
-row whose EPOCH is closest within MATCH_TOL_SEC. Wipes the satellite table (CASCADE).
+Per NORAD that means a target TLE epoch (TCA - DSE * 1 day). For each, pick among the gp_history
+rows within MATCH_TOL_SEC the one created last before T_SNAPSHOT. Space-Track republishes refitted
+element sets under the same epoch, and DSE (3 decimals, ~86 s) cannot tell them apart, so the
+creation date decides. Wipes the satellite table (CASCADE).
 """
 import csv
 import json
@@ -27,6 +29,10 @@ CSV_PATH = OUT_DIR / "satellite.csv"
 
 T_END = datetime(2026, 5, 9, 19, 0, 0, tzinfo=timezone.utc)
 T_QUERY_CUTOFF = datetime(2026, 5, 10, 7, 2, 0, tzinfo=timezone.utc)
+# When SOCRATES pulled its catalog. Event-level miss distances place it between the 18:22:33 and
+# 18:22:48 Space-Track batches: SOCRATES has the analyst objects of the first, and its miss
+# distances fit the versions from before the second better, 2,997 events to 249.
+T_SNAPSHOT = datetime(2026, 5, 9, 18, 22, 40, tzinfo=timezone.utc)
 T_START = T_END - timedelta(days=30)
 SLICE_HOURS = 12
 MATCH_TOL_SEC = 60.0
@@ -170,9 +176,12 @@ def merge_by_target(slice_files, targets):
             diff = abs((ep_dt - target).total_seconds())
             if diff > MATCH_TOL_SEC:
                 continue
+            created = datetime.fromisoformat(r["CREATION_DATE"]).replace(tzinfo=timezone.utc)
+            if created >= T_SNAPSHOT:
+                continue
             cur = best.get(ncid)
-            if cur is None or diff < cur[0]:
-                best[ncid] = (diff, r)
+            if cur is None or (created, -diff) > cur[0]:
+                best[ncid] = ((created, -diff), r)
     matched = {n: rec for n, (_, rec) in best.items()}
     missing = len(targets) - len(matched)
     print(f"matched {len(matched)} / {len(targets)} ({len(matched)/len(targets)*100:.1f}%); "
