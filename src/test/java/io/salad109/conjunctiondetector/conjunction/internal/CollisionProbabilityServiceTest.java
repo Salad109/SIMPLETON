@@ -23,8 +23,6 @@ class CollisionProbabilityServiceTest {
 
     private static final double MU = 398600.4418e9;
     private static final double LEO_RADIUS_M = 7_000_000.0;
-    private static final double LEO_PERIGEE_KM = 700.0;
-    private static final double HIGH_PERIGEE_KM = 3000.0;
     private static final OffsetDateTime TCA =
             OffsetDateTime.of(2025, 1, 15, 12, 0, 0, 0, ZoneOffset.UTC);
     private static final OffsetDateTime FRESH_EPOCH = TCA.minusHours(12);
@@ -51,8 +49,8 @@ class CollisionProbabilityServiceTest {
 
     @Test
     void nullPvCoordinatesYieldsZeroPc() {
-        SatelliteScanInfo a = new SatelliteScanInfo(11111, null, null, FRESH_EPOCH, LEO_PERIGEE_KM, "PAYLOAD");
-        SatelliteScanInfo b = new SatelliteScanInfo(22222, null, null, FRESH_EPOCH, LEO_PERIGEE_KM, "PAYLOAD");
+        SatelliteScanInfo a = new SatelliteScanInfo(11111, null, null, FRESH_EPOCH, "PAYLOAD");
+        SatelliteScanInfo b = new SatelliteScanInfo(22222, null, null, FRESH_EPOCH, "PAYLOAD");
         RefinedEvent noPv = new RefinedEvent(new SatelliteScanInfoPair(a, b),
                 0.05, TCA, HEAD_ON_REL_VEL_MS, null, null, null, null);
         assertThat(service.computeProbabilityAndBuild(noPv).getCollisionProbability()).isZero();
@@ -96,11 +94,6 @@ class CollisionProbabilityServiceTest {
         assertThat(pc(event().epochs(stale, stale))).isNotEqualTo(pc(event()));
     }
 
-    @Test
-    void highAltitudePerigeeSelectsDistinctCovarianceBranch() {
-        assertThat(pc(event().perigee(HIGH_PERIGEE_KM))).isNotEqualTo(pc(event()));
-    }
-
     private double pc(EventBuilder builder) {
         return service.computeProbabilityAndBuild(builder.build()).getCollisionProbability();
     }
@@ -108,8 +101,6 @@ class CollisionProbabilityServiceTest {
     private static final class EventBuilder {
         private double missKm = 0.05;
         private double relVelMS = HEAD_ON_REL_VEL_MS;
-        private double perigeeKmA = LEO_PERIGEE_KM;
-        private double perigeeKmB = LEO_PERIGEE_KM;
         private String typeA = "PAYLOAD";
         private String typeB = "PAYLOAD";
         private OffsetDateTime epochA = FRESH_EPOCH;
@@ -124,12 +115,6 @@ class CollisionProbabilityServiceTest {
 
         EventBuilder relVel(double mps) {
             this.relVelMS = mps;
-            return this;
-        }
-
-        EventBuilder perigee(double km) {
-            this.perigeeKmA = km;
-            this.perigeeKmB = km;
             return this;
         }
 
@@ -157,8 +142,8 @@ class CollisionProbabilityServiceTest {
         }
 
         RefinedEvent build() {
-            SatelliteScanInfo a = new SatelliteScanInfo(noradA, null, null, epochA, perigeeKmA, typeA);
-            SatelliteScanInfo b = new SatelliteScanInfo(noradB, null, null, epochB, perigeeKmB, typeB);
+            SatelliteScanInfo a = new SatelliteScanInfo(noradA, null, null, epochA, typeA);
+            SatelliteScanInfo b = new SatelliteScanInfo(noradB, null, null, epochB, typeB);
 
             double vCirc = Math.sqrt(MU / LEO_RADIUS_M);
             double missM = missKm * 1000.0;

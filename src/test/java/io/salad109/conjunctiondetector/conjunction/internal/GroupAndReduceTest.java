@@ -20,8 +20,8 @@ class GroupAndReduceTest {
 
     private static SatelliteScanInfoPair makePair(int noradA, int noradB) {
         OffsetDateTime epoch = OffsetDateTime.now(ZoneOffset.UTC);
-        SatelliteScanInfo a = new SatelliteScanInfo(noradA, "", "", epoch, 400.0, "PAYLOAD");
-        SatelliteScanInfo b = new SatelliteScanInfo(noradB, "", "", epoch, 400.0, "PAYLOAD");
+        SatelliteScanInfo a = new SatelliteScanInfo(noradA, "", "", epoch, "PAYLOAD");
+        SatelliteScanInfo b = new SatelliteScanInfo(noradB, "", "", epoch, "PAYLOAD");
         return new SatelliteScanInfoPair(a, b);
     }
 

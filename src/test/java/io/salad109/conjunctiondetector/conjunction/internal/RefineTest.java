@@ -36,8 +36,8 @@ class RefineTest {
 
     private static SatelliteScanInfoPair pair() {
         OffsetDateTime epoch = OffsetDateTime.now(ZoneOffset.UTC);
-        SatelliteScanInfo a = new SatelliteScanInfo(100, "", "", epoch, 400.0, "PAYLOAD");
-        SatelliteScanInfo b = new SatelliteScanInfo(200, "", "", epoch, 400.0, "PAYLOAD");
+        SatelliteScanInfo a = new SatelliteScanInfo(100, "", "", epoch, "PAYLOAD");
+        SatelliteScanInfo b = new SatelliteScanInfo(200, "", "", epoch, "PAYLOAD");
         return new SatelliteScanInfoPair(a, b);
     }
 

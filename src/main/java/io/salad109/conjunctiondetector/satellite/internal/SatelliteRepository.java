@@ -55,7 +55,7 @@ public interface SatelliteRepository extends JpaRepository<Satellite, Integer> {
     Optional<SatelliteDetails> findSatelliteDetailsByNoradCatId(int noradCatId);
 
     @Query("SELECT new io.salad109.conjunctiondetector.satellite.SatelliteScanInfo(" +
-            "s.noradCatId, s.tleLine1, s.tleLine2, s.epoch, s.perigeeKm, s.objectType) " +
+            "s.noradCatId, s.tleLine1, s.tleLine2, s.epoch, s.objectType) " +
             "FROM Satellite s")
     List<SatelliteScanInfo> findAllSatelliteScanInfo();
 

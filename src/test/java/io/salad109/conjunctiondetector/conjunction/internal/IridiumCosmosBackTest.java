@@ -52,12 +52,12 @@ class IridiumCosmosBackTest {
 
     private static SatelliteScanInfo iridium() {
         return new SatelliteScanInfo(24946, IRIDIUM_TLE1, IRIDIUM_TLE2,
-                OffsetDateTime.of(2009, 2, 9, 18, 49, 39, 0, ZoneOffset.UTC), 780.0, "PAYLOAD");
+                OffsetDateTime.of(2009, 2, 9, 18, 49, 39, 0, ZoneOffset.UTC), "PAYLOAD");
     }
 
     private static SatelliteScanInfo cosmos() {
         return new SatelliteScanInfo(22675, COSMOS_TLE1, COSMOS_TLE2,
-                OffsetDateTime.of(2009, 2, 9, 11, 57, 36, 0, ZoneOffset.UTC), 780.0, "PAYLOAD");
+                OffsetDateTime.of(2009, 2, 9, 11, 57, 36, 0, ZoneOffset.UTC), "PAYLOAD");
     }
 
     @Test

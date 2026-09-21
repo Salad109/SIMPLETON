@@ -95,10 +95,8 @@ class CeriseArianBackTest {
         OffsetDateTime ceriseEpoch = OffsetDateTime.of(1996, 7, 23, 9, 25, 32, 0, ZoneOffset.UTC);
         OffsetDateTime debrisEpoch = OffsetDateTime.of(1996, 7, 23, 8, 15, 33, 0, ZoneOffset.UTC);
 
-        SatelliteScanInfo cerise = new SatelliteScanInfo(23606, CERISE_TLE1, CERISE_TLE2,
-                ceriseEpoch, 670.0, "PAYLOAD");
-        SatelliteScanInfo debris = new SatelliteScanInfo(18208, DEBRIS_TLE1, DEBRIS_TLE2,
-                debrisEpoch, 670.0, "DEBRIS");
+        SatelliteScanInfo cerise = new SatelliteScanInfo(23606, CERISE_TLE1, CERISE_TLE2, ceriseEpoch, "PAYLOAD");
+        SatelliteScanInfo debris = new SatelliteScanInfo(18208, DEBRIS_TLE1, DEBRIS_TLE2, debrisEpoch, "DEBRIS");
 
         List<SatelliteScanInfo> satellites = List.of(cerise, debris);
         Map<Integer, TLEPropagator> propagators = propagationService.buildPropagators(satellites);

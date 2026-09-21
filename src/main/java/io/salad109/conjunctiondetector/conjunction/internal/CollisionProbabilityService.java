@@ -30,24 +30,13 @@ public class CollisionProbabilityService {
     private static final double RADIUS_DEBRIS_M = 0.5;
     private static final double RADIUS_UNKNOWN_M = 1.0;
 
-    // SGP4 1-sigma position uncertainty (m). Aida & Kirschner (2013) Table 1.
-    // Growth rates: (6-7d value - epoch value) / 6.5d. Cross-track stays flat.
-
-    // LEO (<2000 km)
-    private static final double LEO_RADIAL_BASE_M = 176.0;
-    private static final double LEO_INTRACK_BASE_M = 695.0;
-    private static final double LEO_CROSSTRACK_BASE_M = 168.0;
-    private static final double LEO_RADIAL_GROWTH_M_PER_DAY = 125.0;
-    private static final double LEO_INTRACK_GROWTH_M_PER_DAY = 392.0;
-
-    // Higher orbits (>2000 km) - extrapolated 2x base 0.5x growth
-    private static final double HIGH_RADIAL_BASE_M = LEO_RADIAL_BASE_M * 2.0;
-    private static final double HIGH_INTRACK_BASE_M = LEO_INTRACK_BASE_M * 2.0;
-    private static final double HIGH_CROSSTRACK_BASE_M = LEO_CROSSTRACK_BASE_M * 2.0;
-    private static final double HIGH_RADIAL_GROWTH_M_PER_DAY = LEO_RADIAL_GROWTH_M_PER_DAY * 0.5;
-    private static final double HIGH_INTRACK_GROWTH_M_PER_DAY = LEO_INTRACK_GROWTH_M_PER_DAY * 0.5;
-
-    private static final double LEO_ALTITUDE_THRESHOLD_KM = 2000.0;
+    // SGP4 1-sigma position uncertainty (m). Aida & Kirschner (2013) Table 1, 5-day fit,
+    // fitted to their two forward bins (2-3 d and 6-7 d, at midpoints 2.5 and 6.5).
+    private static final double RADIAL_BASE_M = 248.4;
+    private static final double INTRACK_BASE_M = 1187.8;
+    private static final double CROSSTRACK_BASE_M = 164.0;
+    private static final double RADIAL_GROWTH_M_PER_DAY = 114.3;
+    private static final double INTRACK_GROWTH_M_PER_DAY = 316.5;
 
     // Faster than numerical integration and more accurate than existing analytical methods. Serra et al. (2016)
     private final ShortTermEncounter2DPOCMethod pocMethod = new Laas2015();
@@ -81,8 +70,8 @@ public class CollisionProbabilityService {
         Orbit orbitA = new CartesianOrbit(event.pvA(), event.frame(), event.absoluteDate(), MU);
         Orbit orbitB = new CartesianOrbit(event.pvB(), event.frame(), event.absoluteDate(), MU);
 
-        StateCovariance covA = buildCovariance(satA, tleAgeDays(satA.epoch(), event.tca()), event);
-        StateCovariance covB = buildCovariance(satB, tleAgeDays(satB.epoch(), event.tca()), event);
+        StateCovariance covA = buildCovariance(tleAgeDays(satA.epoch(), event.tca()), event);
+        StateCovariance covB = buildCovariance(tleAgeDays(satB.epoch(), event.tca()), event);
 
         double combinedRadius = estimateRadius(satA) + estimateRadius(satB);
 
@@ -91,18 +80,10 @@ public class CollisionProbabilityService {
         return Math.clamp(result.getValue(), 0.0, 1.0);
     }
 
-    private StateCovariance buildCovariance(SatelliteScanInfo sat, double tleAgeDays, RefinedEvent event) {
-        boolean isLeo = sat.perigeeKm() < LEO_ALTITUDE_THRESHOLD_KM;
-
-        double radialBase = isLeo ? LEO_RADIAL_BASE_M : HIGH_RADIAL_BASE_M;
-        double intrackBase = isLeo ? LEO_INTRACK_BASE_M : HIGH_INTRACK_BASE_M;
-        double crosstrackBase = isLeo ? LEO_CROSSTRACK_BASE_M : HIGH_CROSSTRACK_BASE_M;
-        double radialGrowth = isLeo ? LEO_RADIAL_GROWTH_M_PER_DAY : HIGH_RADIAL_GROWTH_M_PER_DAY;
-        double intrackGrowth = isLeo ? LEO_INTRACK_GROWTH_M_PER_DAY : HIGH_INTRACK_GROWTH_M_PER_DAY;
-
-        double sigR = radialBase + radialGrowth * tleAgeDays;
-        double sigT = intrackBase + intrackGrowth * tleAgeDays;
-        double sigW = crosstrackBase; // flat per Aida Table 1
+    private StateCovariance buildCovariance(double tleAgeDays, RefinedEvent event) {
+        double sigR = RADIAL_BASE_M + RADIAL_GROWTH_M_PER_DAY * tleAgeDays;
+        double sigT = INTRACK_BASE_M + INTRACK_GROWTH_M_PER_DAY * tleAgeDays;
+        double sigW = CROSSTRACK_BASE_M; // flat across both forward bins of Aida Table 1
 
         RealMatrix cov = new Array2DRowRealMatrix(6, 6);
         cov.setEntry(0, 0, sigR * sigR);

@@ -55,8 +55,7 @@ class ComputeKnotsTest {
             "1000, 7, 3",     // 144 steps, window not a whole multiple of the step
     })
     void everyStepCarriesAPosition(int windowSeconds, double stepSeconds, int stride) {
-        SatelliteScanInfo iridium = new SatelliteScanInfo(24946, IRIDIUM_TLE1, IRIDIUM_TLE2,
-                EPOCH, 780.0, "PAYLOAD");
+        SatelliteScanInfo iridium = new SatelliteScanInfo(24946, IRIDIUM_TLE1, IRIDIUM_TLE2, EPOCH, "PAYLOAD");
         Map<Integer, TLEPropagator> propagators = propagationService.buildPropagators(List.of(iridium));
 
         KnotCache knots = propagationService.computeKnots(

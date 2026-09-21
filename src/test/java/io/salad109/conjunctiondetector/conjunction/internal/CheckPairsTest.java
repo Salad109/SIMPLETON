@@ -17,7 +17,7 @@ class CheckPairsTest {
     private final ScanService scanService = new ScanService(null);
 
     private static SatelliteScanInfo sat(int noradId) {
-        return new SatelliteScanInfo(noradId, "", "", OffsetDateTime.now(ZoneOffset.UTC), 400.0, "PAYLOAD");
+        return new SatelliteScanInfo(noradId, "", "", OffsetDateTime.now(ZoneOffset.UTC), "PAYLOAD");
     }
 
     private static PositionCache cacheOf(int[] arrayIdToNoradId, float[][] x, float[][] y, float[][] z) {
