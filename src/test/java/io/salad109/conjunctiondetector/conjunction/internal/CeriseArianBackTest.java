@@ -34,15 +34,19 @@ class CeriseArianBackTest {
     private static final String DEBRIS_TLE1 = "1 18208U 86019RF  96205.34413154 +.00001097 +00000-0 +20371-3 0  9993";
     private static final String DEBRIS_TLE2 = "2 18208 098.4535 334.7433 0014702 119.3840 240.8797 14.67242450509233";
 
-    // Multiple detected passes. Source: "Collision of Cerise with Space Debris" by Alby, Lansard & Michal
+    // Multiple detected passes. Source: "Collision of Cerise with Space Debris" by Alby, Lansard & Michal, table 4.1
     private static final OffsetDateTime[] PASSES = {
             OffsetDateTime.of(1996, 7, 24, 1, 37, 2, 0, ZoneOffset.UTC),
             OffsetDateTime.of(1996, 7, 24, 3, 15, 14, 100_000_000, ZoneOffset.UTC),
             OffsetDateTime.of(1996, 7, 24, 4, 53, 26, 100_000_000, ZoneOffset.UTC),
             OffsetDateTime.of(1996, 7, 24, 6, 31, 38, 200_000_000, ZoneOffset.UTC),
             OffsetDateTime.of(1996, 7, 24, 8, 9, 50, 200_000_000, ZoneOffset.UTC),
-            OffsetDateTime.of(1996, 7, 24, 9, 48, 2, 500_000_000, ZoneOffset.UTC),
+            OffsetDateTime.of(1996, 7, 24, 9, 48, 2, 300_000_000, ZoneOffset.UTC),
     };
+
+    // The impact instant from the prose
+    private static final OffsetDateTime COLLISION_INSTANT =
+            OffsetDateTime.of(1996, 7, 24, 9, 48, 2, 500_000_000, ZoneOffset.UTC);
     private static final double[] PASS_DISTANCES_KM = {2.6, 2.3, 1.8, 1.8, 1.6, 1.5};
 
     private final PropagationService propagationService = new PropagationService();
@@ -64,7 +68,7 @@ class CeriseArianBackTest {
         TLEPropagator ceriseProp = TLEPropagator.selectExtrapolator(new TLE(CERISE_TLE1, CERISE_TLE2));
         TLEPropagator debrisProp = TLEPropagator.selectExtrapolator(new TLE(DEBRIS_TLE1, DEBRIS_TLE2));
 
-        AbsoluteDate collisionDate = new AbsoluteDate(PASSES[5].toInstant(), TimeScalesFactory.getUTC());
+        AbsoluteDate collisionDate = new AbsoluteDate(COLLISION_INSTANT.toInstant(), TimeScalesFactory.getUTC());
 
         PVCoordinates pvCerise = ceriseProp.getPVCoordinates(collisionDate, ceriseProp.getFrame());
         PVCoordinates pvDebris = debrisProp.getPVCoordinates(collisionDate, ceriseProp.getFrame());
@@ -131,10 +135,10 @@ class CeriseArianBackTest {
 
         for (int i = 0; i < 6; i++) {
             ScanService.RefinedEvent e = sorted.get(i);
-            long tcaErrorMs = Math.abs(Duration.between(PASSES[i], e.tca()).toMillis());
-            System.out.printf("Pass %d: TCA %s (error %dms)  dist %.3f km (paper %.1f km)  vel %.1f m/s%n",
+            long tcaErrorMs = Duration.between(PASSES[i], e.tca()).toMillis();
+            System.out.printf("Pass %d: TCA %s (error %+dms)  dist %.3f km (paper %.1f km)  vel %.1f m/s%n",
                     i + 1, e.tca(), tcaErrorMs, e.distanceKm(), PASS_DISTANCES_KM[i], e.relativeVelocityMS());
-            assertThat(tcaErrorMs)
+            assertThat(Math.abs(tcaErrorMs))
                     .as("pass %d TCA error (detected %s, paper %s)", i + 1, e.tca(), PASSES[i])
                     .isLessThan(30_000);
             assertThat(e.relativeVelocityMS())

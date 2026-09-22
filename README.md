@@ -16,7 +16,8 @@ also flagged by this pipeline, with TCA agreeing to 3 ms and miss distance to 0.
 including secondary pairs that SOCRATES excludes.
 
 Backtested against the 2009 Iridium 33 / Cosmos 2251 collision and the 1996 CERISE / Ariane debris collision. The
-pipeline flags both events at the deployed configuration, with 9 and 3 ms TCA accuracy respectively.
+pipeline flags both at the deployed configuration, 0.698 km and 0.895 km from a true separation of zero. The error
+is dominated by TLE accuracy, not the screening.
 
 |                  | SIMPLETON                                    | CelesTrak SOCRATES Plus  |
 |------------------|----------------------------------------------|--------------------------|
