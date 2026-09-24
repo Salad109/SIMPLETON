@@ -46,10 +46,13 @@ Time saturates near 29 s while accuracy keeps falling. Everything past roughly 4
 events at an accelerating rate.
 
 This is the only parameter that degrades events instead of just losing them. Miss distance error grows from 0 at short
-gaps to 3.2 km at 1000 s, because `refine` fits its analytical minimum to interpolated positions.
+gaps to 3.2 km at 1000 s, because `refine` estimates the TCA from interpolated positions, and SGP4 evaluated at a
+slightly wrong TCA reads a larger separation.
 
-When the interpolation is completely wrong the analytical minimum lands outside the 6.5 km gate and the event is
-discarded before SGP4 is ever called.
+The same error is what loses events. An instrumented rerun of this sweep traced every missed event at six gaps. Through
+478 s every real loss passes the gate and fails the final check, SGP4 at the estimated TCA landing just above 5 km. From
+600 s a few are dropped earlier, at the gate, because the interpolated positions put their analytical minimum above
+6.5 km: 14 of the 277 misses at 600 s and 75 of the 3,636 at 797 s. The rest still fail the final check.
 
 The median plateau near 220 m in `5_miss_error.png` is an artifact of the metric, not a bound on the error. Miss error
 covers matched events only, and an event matches only if both runs put it within 5 km, so no matched event can differ by

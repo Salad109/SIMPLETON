@@ -8,12 +8,18 @@ param_label = 'Cell Size (km)'
 avg = df.groupby(param).mean(numeric_only=True).reset_index()
 sd = df.groupby(param)['total_s'].std()
 
-print(f"| Cell (km) | Conjunctions | Jaccard | Missed | Miss err p99 | Total Time |")
-print(f"|---|---|---|---|---|---|")
-for _, row in avg.iterrows():
+THRESHOLD_KM = 5.0
+
+
+def v_guar(row):
+    radius = min(row['cell_km'], row['tolerance_km'])
+    return 2 * np.sqrt(radius ** 2 - THRESHOLD_KM ** 2) / row['step_s']
+
+print("| Cell (km) | Conjunctions | Jaccard | Missed | v_guar | Total Time |")
+print("|---|---|---|---|---|---|")
+for _, row in avg.sort_values(param, ascending=False).iterrows():
     print(f"| {row[param]:.0f} | {int(round(row['conj'])):,} | {row['jaccard']:.5f} | "
-          f"{int(round(row['safe_only']))} | {row['miss_err_p99_m']:.3f} m | "
-          f"{row['total_s']:.1f}s +/- {sd[row[param]]:.1f} |")
+          f"{int(round(row['safe_only']))} | {v_guar(row):.1f} km/s | {row['total_s']:.1f}s |")
 
 timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
 colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']

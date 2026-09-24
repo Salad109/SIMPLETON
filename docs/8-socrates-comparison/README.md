@@ -99,7 +99,7 @@ Agreement is flat at 99.7%+ across all seven days.
 
 **128 SOCRATES only.** 33 sit within 0.5 km of the 5 km wall (SOCRATES just under, us just over). 106 close below
 325 m/s: slow co-orbiting pairs that survived the 10 m/s filter, individuated differently by the two systems. The
-groups overlap by 20. The other 9 close at 14.5-16.3 km/s, above the 12.8 km/s capture guarantee: real grid misses.
+groups overlap by 20. The other 9 close at 14.5-16.3 km/s, above the 13.7 km/s capture guarantee: real grid misses.
 
 **286 ours only.** 60 sit within 0.5 km of the wall and 1 is slow. SOCRATES does not report the pairs of the other 225,
 though both objects appear elsewhere in its output. Vallado's reference SGP4 puts all 225 under 5 km. 25% have orbital
@@ -109,9 +109,13 @@ runs on STK CAT, but does not publish which pre-filters it enables.
 
 ## Inputs (regenerable)
 
-- socrates.csv: https://celestrak.org/SOCRATES/sort-minRange.csv
+`socrates.csv` and `active.txt` are snapshots and cannot be regenerated with the exact same data used here. Their URLs
+serve the current lists, not the ones this comparison ran on.
+
+- socrates.csv: https://celestrak.org/SOCRATES/sort-minRange.csv as published 2026-05-10 07:02 UTC
 - satellite table: `python3 docs/8-socrates-comparison/socrates-catalog-sync.py` (reconstructs SOCRATES's TLE set from
   socrates.csv's DSE columns, pulls those exact TLEs from Space-Track, loads into Postgres)
-- ours.csv: `./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-socrates`
-- active.txt: https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle
+- ours.csv:
+  `./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-socrates -Dspring-boot.run.jvmArguments="-Xmx16g -Xms16g -XX:+AlwaysPreTouch -Dconjunction.schedule.cron=-"`
+- active.txt: https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle as pulled 2026-05-10
 - satellite_names.csv: `\copy (select norad_cat_id, object_name from satellite) to stdout csv header`

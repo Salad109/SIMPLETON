@@ -12,12 +12,19 @@ sd = df.groupby(param)['total_s'].std()
 # the coarse net stops widening in practice, so mark it.
 cell_km = df['cell_km'].iloc[0]
 
-print(f"| Tolerance (km) | Conjunctions | Jaccard | Missed | Miss err p99 | Total Time |")
-print(f"|---|---|---|---|---|---|")
+THRESHOLD_KM = 5.0
+
+
+def v_guar(row):
+    radius = min(row['cell_km'], row['tolerance_km'])
+    return 2 * np.sqrt(radius ** 2 - THRESHOLD_KM ** 2) / row['step_s']
+
+print("| Tolerance (km) | Conjunctions | Jaccard | Missed | v_guar | Miss err p99 | Total Time |")
+print("|---|---|---|---|---|---|---|")
 for _, row in avg.iterrows():
     print(f"| {row[param]:.0f} | {int(round(row['conj'])):,} | {row['jaccard']:.5f} | "
-          f"{int(round(row['safe_only']))} | {row['miss_err_p99_m']:.3f} m | "
-          f"{row['total_s']:.1f}s +/- {sd[row[param]]:.1f} |")
+          f"{int(round(row['safe_only']))} | {v_guar(row):.1f} km/s | {row['miss_err_p99_m']:.3f} m | "
+          f"{row['total_s']:.1f}s |")
 print()
 print(f"locked geometry: step {df['step_s'].iloc[0]:.4g}s, cell {cell_km:.0f}km, "
       f"knot gap {df['knot_gap_s'].iloc[0]:.0f}s")

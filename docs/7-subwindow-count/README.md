@@ -53,4 +53,4 @@ one: at 3 the subwindows would overlap by 3.6s, at 6 they would leave a 3.6s gap
 For 24h lookahead window, use 4. For 7 days, use 28 (same cache size per subwindow as 24h/4).
 
 Higher counts cause no meaningful speed penalty, and may arguably improve performance in memory-constrained environments
-by reducing GC pressure.
+by reducing GC pressure. Runtime across subwindow counts has not been directly measured.
