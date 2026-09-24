@@ -10,7 +10,7 @@ run_gc() {
     echo "=== Running $gc_flag ==="
     echo ""
     cd "$ROOT"
-    ./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-gc "-Dspring-boot.run.jvmArguments=-Xmx12g -Xms12g -XX:+AlwaysPreTouch $gc_flag"
+    ./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-gc "-Dspring-boot.run.jvmArguments=-Xmx12g -Xms12g -XX:+AlwaysPreTouch -Dconjunction.schedule.cron=- $gc_flag"
 }
 
 run_gc "-XX:+UseG1GC"

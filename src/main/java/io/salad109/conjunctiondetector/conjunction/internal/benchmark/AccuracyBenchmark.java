@@ -21,9 +21,9 @@ import java.util.stream.DoubleStream;
 
 /**
  * Linux:
- * ./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-accuracy -Dspring-boot.run.jvmArguments="-Xmx20g -Xms20g -XX:+AlwaysPreTouch"
+ * ./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-accuracy -Dspring-boot.run.jvmArguments="-Xmx20g -Xms20g -XX:+AlwaysPreTouch -Dconjunction.schedule.cron=-"
  * Windows:
- * ./mvnw spring-boot:run "-Dspring-boot.run.profiles=benchmark-accuracy" "-Dspring-boot.run.jvmArguments=-Xmx20g -Xms20g -XX:+AlwaysPreTouch"
+ * ./mvnw spring-boot:run "-Dspring-boot.run.profiles=benchmark-accuracy" "-Dspring-boot.run.jvmArguments=-Xmx20g -Xms20g -XX:+AlwaysPreTouch -Dconjunction.schedule.cron=-"
  */
 @Component
 @Profile("benchmark-accuracy")
