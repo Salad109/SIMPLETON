@@ -14,14 +14,14 @@ single-window case.
 
 Rough PositionCache size per subwindow for 30k satellites at step-seconds=10.8:
 
-| Window   | Count | Steps/Sub | Cache/Sub |
-|----------|-------|-----------|-----------|
-| 24 hours | 1     | 8,001     | 2.9 GB    |
-| 24 hours | 4     | 2,001     | 0.7 GB    |
-| 24 hours | 8     | 1,001     | 0.4 GB    |
-| 7 days   | 7     | 8,001     | 2.9 GB    |
-| 7 days   | 14    | 4,001     | 1.4 GB    |
-| 7 days   | 28    | 2,001     | 0.7 GB    |
+| Window   | Count | Samples/Sub | Cache/Sub |
+|----------|-------|-------------|-----------|
+| 24 hours | 1     | 8,001       | 2.9 GB    |
+| 24 hours | 4     | 2,001       | 0.7 GB    |
+| 24 hours | 8     | 1,001       | 0.4 GB    |
+| 7 days   | 7     | 8,001       | 2.9 GB    |
+| 7 days   | 14    | 4,001       | 1.4 GB    |
+| 7 days   | 28    | 2,001       | 0.7 GB    |
 
 These are float array sizes only. Actual heap is higher: the KnotCache stays reachable while the PositionCache is built,
 adding another 6% at stride 32, on top of intermediate collections, Spring Boot and the JVM. At very high counts the

@@ -19,19 +19,17 @@ Each GC runs the same fixed-parameter conjunction pipeline 10 times to measure t
 
 | GC         | Mean Time | Std Dev | Min    | Max    | Conjunctions |
 |------------|-----------|---------|--------|--------|--------------|
-| G1         | 29.92s    | 0.79s   | 28.80s | 31.03s | 58,405       |
-| Parallel   | 29.61s    | 0.30s   | 29.16s | 30.13s | 58,405       |
-| Shenandoah | 29.23s    | 0.23s   | 28.89s | 29.73s | 58,405       |
-| Z          | 32.54s    | 0.27s   | 32.26s | 33.14s | 58,405       |
+| G1         | 27.41s    | 0.66s   | 26.32s | 28.23s | 58,405       |
+| Parallel   | 27.48s    | 0.48s   | 26.39s | 27.98s | 58,405       |
+| Shenandoah | 28.06s    | 0.13s   | 27.86s | 28.23s | 58,405       |
+| Z          | 31.55s    | 0.50s   | 30.73s | 32.33s | 58,405       |
 
 All four detect identical conjunctions. The difference is pure runtime.
 
-G1, Parallel and Shenandoah span 2.3%, too close for ten samples to separate. Shenandoah is fastest on the mean and
-holds the tightest spread, 0.23s against G1's 0.79s.
+G1, Parallel and Shenandoah are within 2.4% of each other, practically within noise.
 
-ZGC is 11.3% slower than Shenandoah. Each iteration allocates a 2.9 GB position cache and tens of millions of
-short-lived detections in one 24 h pass, then drops them all. Generational copying collectors handle that shape well,
-while ZGC's concurrent machinery is built to keep pause times down, which is not the constraint here.
+ZGC is the outlier, 15.1% slower than G1. Each iteration allocates a 2.9 GB position cache and tens of millions of
+short-lived detections, then drops them all, and ZGC is built for pause time rather than throughput. But that's a guess.
 
 **Recommendation: G1**, the default, since nothing beat it decisively enough to justify pinning an alternative.
 

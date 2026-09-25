@@ -97,9 +97,10 @@ Agreement is flat at 99.7%+ across all seven days.
 
 ![SOCRATES events we missed, by reported miss distance and relative velocity](2_missed_events.png)
 
-**128 SOCRATES only.** 33 sit within 0.5 km of the 5 km wall (SOCRATES just under, us just over). 106 close below
-325 m/s: slow co-orbiting pairs that survived the 10 m/s filter, individuated differently by the two systems. The
-groups overlap by 20. The other 9 close at 14.5-16.3 km/s, above the 13.7 km/s capture guarantee: real grid misses.
+**128 SOCRATES only.** 106 close below 325 m/s: slow co-orbiting pairs that survived the 10 m/s filter. The 84 km
+tolerance merges successive approaches that SOCRATES reports separately, and we report the closest of them. 13 close at
+14.4-16.3 km/s, above the 13.7 km/s capture guarantee. Those are real screening losses. The last 9 sit at 4.952-5.000
+km, SOCRATES just under the wall and us just over.
 
 **286 ours only.** 60 sit within 0.5 km of the wall and 1 is slow. SOCRATES does not report the pairs of the other 225,
 though both objects appear elsewhere in its output. Vallado's reference SGP4 puts all 225 under 5 km. 25% have orbital
@@ -107,7 +108,7 @@ planes 175° or more apart (1.1% of matched events), and they thin out to ~0 at 
 George & Harvey (AMOS 2011) found both signatures in the misses of STK Advanced CAT's orbit path pre-filter. SOCRATES
 runs on STK CAT, but does not publish which pre-filters it enables.
 
-## Inputs (regenerable)
+## Inputs
 
 `socrates.csv` and `active.txt` are snapshots and cannot be regenerated with the exact same data used here. Their URLs
 serve the current lists, not the ones this comparison ran on.
