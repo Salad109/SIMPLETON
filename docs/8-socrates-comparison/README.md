@@ -102,11 +102,12 @@ tolerance merges successive approaches that SOCRATES reports separately, and we 
 14.4-16.3 km/s, above the 13.7 km/s capture guarantee. Those are real screening losses. The last 9 sit at 4.952-5.000
 km, SOCRATES just under the wall and us just over.
 
-**286 ours only.** 60 sit within 0.5 km of the wall and 1 is slow. SOCRATES does not report the pairs of the other 225,
-though both objects appear elsewhere in its output. Vallado's reference SGP4 puts all 225 under 5 km. 25% have orbital
-planes 175° or more apart (1.1% of matched events), and they thin out to ~0 at the start, middle and end of the window.
-George & Harvey (AMOS 2011) found both signatures in the misses of STK Advanced CAT's orbit path pre-filter. SOCRATES
-runs on STK CAT, but does not publish which pre-filters it enables.
+**286 ours only.** 1 is slow, and 1 sits 2 m inside the wall on a pair SOCRATES reports at another approach. SOCRATES
+does not report the pairs of the other 284, though both objects appear elsewhere in its output. Vallado's reference SGP4
+puts all 284 under 5 km. They do not gather at the wall: 21% sit in its last 0.5 km, as do 19% of matched events. 26%
+have orbital planes 175° or more apart (1.1% of matched events), and they thin out to ~0 at the start, middle and end of
+the window. George & Harvey (AMOS 2011) found both signatures in the misses of STK Advanced CAT's orbit path pre-filter.
+SOCRATES runs on STK CAT, but does not publish which pre-filters it enables.
 
 ## Inputs
 
