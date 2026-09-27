@@ -151,7 +151,7 @@ class IridiumCosmosBackTest {
     }
 
     @Test
-    void detectsCollisionPastTheLastKnot() {
+    void detectsCollisionInTheShortFinalInterval() {
 
         double toleranceKm = 72.0;
         double cellSizeKm = 48.0;
@@ -159,7 +159,8 @@ class IridiumCosmosBackTest {
         int interpolationStride = 50;
         double thresholdKm = 5.0;
 
-        // 411 steps with a stride of 50 leaves the last knot at step 400, and the collision falls at step 405.
+        // 411 steps with a stride of 50 put knots at 0, 50, ..., 400 and 410,
+        // and the collision falls at step 405, inside the short final interval.
         OffsetDateTime startTime = COLLISION_TIME.minusSeconds(3645);
         OffsetDateTime endTime = startTime.plusSeconds(3690);
 
@@ -177,7 +178,7 @@ class IridiumCosmosBackTest {
                 events, cache, propagators, stepSeconds, thresholdKm);
 
         assertThat(refined)
-                .as("the collision sits past the last knot and should still be refined")
+                .as("the collision sits in the short final interval and should still be refined")
                 .isNotEmpty();
     }
 }
