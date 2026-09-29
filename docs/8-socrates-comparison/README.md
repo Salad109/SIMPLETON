@@ -60,14 +60,14 @@ closest approach are within 1 minute of each other.
 | Events                                   |   Count |                                         |
 |------------------------------------------|--------:|----------------------------------------:|
 | SOCRATES total                           | 134,598 |                                         |
-| Our total                                | 134,756 |                                         |
-| Matched (both flagged the same event)    | 134,470 |                                         |
+| Our total                                | 134,763 |                                         |
+| Matched (both flagged the same event)    | 134,477 |                                         |
 | Ours only (we flagged, SOCRATES did not) |     286 | **99.8%** of ours SOCRATES also flagged |
-| SOCRATES only (they flagged, we did not) |     128 |      **99.9%** of SOCRATES we also flag |
+| SOCRATES only (they flagged, we did not) |     121 |      **99.9%** of SOCRATES we also flag |
 
 ## Physics agreement on matched events
 
-For the 134,470 events both pipelines flag:
+For the 134,477 events both pipelines flag:
 
 |               Quantity | Median |    p95 |
 |-----------------------:|-------:|-------:|
@@ -83,13 +83,13 @@ TCA agrees to **3 ms** and miss distance to **0.7 m** at p95.
 
 | Day | SOCRATES |   Ours | Matched | % of ours SOCRATES flagged | % of SOCRATES we flagged |
 |----:|---------:|-------:|--------:|---------------------------:|-------------------------:|
-|   1 |   19,283 | 19,256 |  19,233 |                      99.9% |                    99.7% |
-|   2 |   19,242 | 19,278 |  19,213 |                      99.7% |                    99.8% |
-|   3 |   19,079 | 19,119 |  19,074 |                      99.8% |                   100.0% |
-|   4 |   19,527 | 19,519 |  19,510 |                     100.0% |                    99.9% |
+|   1 |   19,283 | 19,258 |  19,235 |                      99.9% |                    99.8% |
+|   2 |   19,242 | 19,282 |  19,217 |                      99.7% |                    99.9% |
+|   3 |   19,079 | 19,117 |  19,072 |                      99.8% |                   100.0% |
+|   4 |   19,527 | 19,521 |  19,512 |                     100.0% |                    99.9% |
 |   5 |   19,258 | 19,301 |  19,243 |                      99.7% |                    99.9% |
 |   6 |   19,005 | 19,066 |  19,002 |                      99.7% |                   100.0% |
-|   7 |   19,204 | 19,217 |  19,195 |                      99.9% |                   100.0% |
+|   7 |   19,204 | 19,218 |  19,196 |                      99.9% |                   100.0% |
 
 Agreement is flat at 99.7%+ across all seven days.
 
@@ -97,9 +97,9 @@ Agreement is flat at 99.7%+ across all seven days.
 
 ![SOCRATES events we missed, by reported miss distance and relative velocity](2_missed_events.png)
 
-**128 SOCRATES only.** 106 close below 325 m/s: slow co-orbiting pairs that survived the 10 m/s filter. The 84 km
-tolerance merges successive approaches that SOCRATES reports separately, and we report the closest of them. 13 close at
-14.4-16.3 km/s, above the 13.7 km/s capture guarantee. Those are real screening losses. The last 9 sit at 4.952-5.000
+**121 SOCRATES only.** 106 close below 325 m/s: slow co-orbiting pairs that survived the 10 m/s filter. The 84 km
+tolerance merges successive approaches that SOCRATES reports separately, and we report the closest of them. 6 close at
+14.6-16.3 km/s, above the 14.1 km/s capture guarantee. Those are real screening losses. The last 9 sit at 4.952-5.000
 km, SOCRATES just under the wall and us just over.
 
 **286 ours only.** 1 is slow, and 1 sits 2 m inside the wall on a pair SOCRATES reports at another approach. SOCRATES

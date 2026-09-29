@@ -7,7 +7,7 @@
 [Live demo](https://simpleton.zlosnik.dev/)
 
 All-vs-all satellite conjunction screener. Scans the full public catalog (~30,000 objects) for sub-5 km close approaches
-in under 30 seconds on consumer hardware.
+in about 20 seconds on consumer hardware.
 
 Validated against [CelesTrak SOCRATES](https://celestrak.org/SOCRATES/): when filtered to equivalent scope
 (payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.9% of SOCRATES events are
@@ -27,11 +27,11 @@ is dominated by TLE accuracy, not the screening.
 | Threshold        | 5 km (configurable)                          | 5 km                     |
 | Scope            | All-vs-all (~500M pairs)                     | Primaries vs secondaries |
 | 24h conjunctions | ~58,000 (~19,000 filtered to SOCRATES scope) | ~19,000                  |
-| Compute time     | ~27 seconds (~3,200x realtime)               | ~10 hours (17x realtime) |
+| Compute time     | ~20 seconds (~4,400x realtime)               | ~10 hours (17x realtime) |
 
 ## Why It Matters
 
-Full-catalog screening in under 30 seconds is not the point. Screening accuracy is capped by public TLE quality, so
+Full-catalog screening in 20 seconds is not the point. Screening accuracy is capped by public TLE quality, so
 out-speeding other screeners on the same data doesn't add anything. The value is what cheap screening unlocks.
 
 For example, collision-avoidance maneuver planning. Dodging one conjunction can steer a satellite into several new ones,
@@ -78,10 +78,10 @@ same satellite pair with TCAs within 1 minute.
 | Events         |   Count |
 |----------------|--------:|
 | SOCRATES total | 134,598 |
-| Our total      | 134,756 |
-| Matched        | 134,470 |
+| Our total      | 134,763 |
+| Matched        | 134,477 |
 | Ours only      |     286 |
-| Missed         |     128 |
+| Missed         |     121 |
 
 99.9% of SOCRATES events are also flagged by this pipeline. 99.8% of this pipeline's events are also flagged by
 SOCRATES. Agreement is flat at 99.7%+ across all seven days.
@@ -110,14 +110,14 @@ interact when combined, so the Pareto analysis sweeps all parameters simultaneou
 
 Selected Pareto-optimal configurations:
 
-| Step (s) | Knot gap | Cell (km) | Stride | Jaccard     | Missed | Time    |
-|----------|----------|-----------|--------|-------------|--------|---------|
-| 9.375    | 197s     | 66.5      | 21     | 0.99993     | 2      | 34s     |
-| 10.0     | 250s     | 71.5      | 25     | 0.99990     | 3      | 31s     |
-| **10.8** | **346s** | **74.0**  | **32** | **0.99988** | **4**  | **27s** |
-| 10.8     | 454s     | 71.5      | 42     | 0.99945     | 29     | 25s     |
-| 10.8     | 454s     | 64.0      | 42     | 0.99861     | 78     | 25s     |
-| 10.8     | 605s     | 54.0      | 56     | 0.98733     | 737    | 23s     |
+| Step (s) | Knot gap | Cell (km) | Stride | Jaccard     | Missed | Time      |
+|----------|----------|-----------|--------|-------------|--------|-----------|
+| 9.375    | 197s     | 66.5      | 21     | 0.99993     | 2      | 21.4s     |
+| 10.0     | 250s     | 71.5      | 25     | 0.99990     | 3      | 19.2s     |
+| **10.8** | **346s** | **76.5**  | **32** | **0.99988** | **4**  | **17.5s** |
+| 10.8     | 497s     | 74.0      | 46     | 0.99935     | 34     | 16.8s     |
+| 10.8     | 454s     | 61.5      | 42     | 0.99777     | 127    | 16.4s     |
+| 10.8     | 454s     | 51.5      | 42     | 0.98772     | 713    | 15.6s     |
 
 Default configuration (bold) is a good compromise, sitting right before the accuracy cliff.
 

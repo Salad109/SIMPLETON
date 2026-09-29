@@ -8,7 +8,7 @@ sweeps all three simultaneously using a bounded grid search to find the Pareto f
 
 - 31,665-object catalog, 24 h lookahead, 84 km tolerance, 5 km collision threshold
 - Ground truth: `stride=1` at step 9.375 s, cell 105 km. Deliberately safe defaults.
-- 3 iterations per config, median time; the full 497-point search ran 9 h 12 min
+- 3 iterations per config, median time; the full 497-point search ran 6 h 12 min
 - Steps 9.375 / 10.0 / 10.8 / 12.0 s, knot gap 150 to 700 s in 50 s steps, cell size 84 down to 44 km in 2.5 km steps
 - **Jaccard** = `matched / (matched + ours_only + safe_only)`, matched by NORAD pair and TCA within 60 s
 
@@ -20,21 +20,20 @@ exclude a configuration that would have qualified.
 
 | Step (s) | Knot Gap | Cell (km) | Stride | Conj       | Missed | Extra | Jaccard     | Time      |
 |----------|----------|-----------|--------|------------|--------|-------|-------------|-----------|
-| 9.375    | 197s     | 66.5      | 21     | 58,406     | 2      | 2     | 0.99993     | 33.6s     |
-| 10.0     | 250s     | 71.5      | 25     | 58,406     | 3      | 3     | 0.99990     | 30.9s     |
-| **10.8** | **346s** | **74.0**  | **32** | **58,405** | **4**  | **3** | **0.99988** | **26.7s** |
-| 10.8     | 346s     | 71.5      | 32     | 58,397     | 12     | 3     | 0.99974     | 26.5s     |
-| 10.8     | 454s     | 76.5      | 42     | 58,388     | 21     | 3     | 0.99959     | 25.7s     |
-| 10.8     | 454s     | 71.5      | 42     | 58,380     | 29     | 3     | 0.99945     | 25.0s     |
-| 10.8     | 454s     | 66.5      | 42     | 58,356     | 53     | 3     | 0.99904     | 25.0s     |
-| 10.8     | 454s     | 64.0      | 42     | 58,331     | 78     | 3     | 0.99861     | 24.9s     |
-| 10.8     | 497s     | 61.5      | 46     | 58,267     | 143    | 4     | 0.99748     | 24.7s     |
-| 10.8     | 454s     | 59.0      | 42     | 58,207     | 203    | 4     | 0.99646     | 24.2s     |
-| 10.8     | 454s     | 56.5      | 42     | 58,113     | 297    | 4     | 0.99485     | 24.2s     |
-| 10.8     | 605s     | 61.5      | 56     | 58,032     | 376    | 2     | 0.99353     | 24.1s     |
-| 10.8     | 605s     | 59.0      | 56     | 57,957     | 451    | 2     | 0.99224     | 23.8s     |
-| 10.8     | 605s     | 56.5      | 56     | 57,870     | 539    | 3     | 0.99072     | 23.7s     |
-| 10.8     | 605s     | 54.0      | 56     | 57,672     | 737    | 3     | 0.98733     | 23.3s     |
+| 9.375    | 197s     | 66.5      | 21     | 58,406     | 2      | 2     | 0.99993     | 21.4s     |
+| 10.0     | 250s     | 71.5      | 25     | 58,406     | 3      | 3     | 0.99990     | 19.2s     |
+| **10.8** | **346s** | **76.5**  | **32** | **58,405** | **4**  | **3** | **0.99988** | **17.5s** |
+| 10.8     | 400s     | 74.0      | 37     | 58,397     | 12     | 3     | 0.99974     | 17.1s     |
+| 10.8     | 400s     | 71.5      | 37     | 58,389     | 20     | 3     | 0.99961     | 17.1s     |
+| 10.8     | 497s     | 74.0      | 46     | 58,376     | 34     | 4     | 0.99935     | 16.8s     |
+| 10.8     | 497s     | 66.5      | 46     | 58,344     | 66     | 4     | 0.99880     | 16.4s     |
+| 10.8     | 454s     | 61.5      | 42     | 58,282     | 127    | 3     | 0.99777     | 16.4s     |
+| 10.8     | 497s     | 61.5      | 46     | 58,267     | 143    | 4     | 0.99748     | 16.4s     |
+| 10.8     | 454s     | 59.0      | 42     | 58,207     | 203    | 4     | 0.99646     | 16.2s     |
+| 10.8     | 551s     | 59.0      | 51     | 58,111     | 299    | 4     | 0.99481     | 16.1s     |
+| 10.8     | 551s     | 56.5      | 51     | 58,028     | 382    | 4     | 0.99339     | 15.8s     |
+| 10.8     | 454s     | 54.0      | 42     | 57,923     | 487    | 4     | 0.99159     | 15.8s     |
+| 10.8     | 454s     | 51.5      | 42     | 57,697     | 713    | 4     | 0.98772     | 15.6s     |
 
 Bold row is the production operating point. It sits where marginal cost breaks.
 
@@ -67,12 +66,12 @@ gap:
 
 | Cell    | Step   | v_guar    | Missed |
 |---------|--------|-----------|-------:|
-| 54 km   | 9.375s | 11.5 km/s |     90 |
-| 54 km   | 10.8s  | 10.0 km/s |    476 |
-| 61.5 km | 10.8s  | 11.4 km/s |    116 |
+| 56.5 km | 9.375s | 12.0 km/s |     45 |
+| 56.5 km | 10.8s  | 10.4 km/s |    285 |
+| 49 km   | 9.375s | 10.4 km/s |    276 |
 
-The first two share a cell size and are 5.3x apart. The first and third have neither cell size nor step in common, share
-only a `v_guar` (to within 1%), and are 29% apart. Across the whole grid, pairing configurations at the same knot gap,
+The first two share a cell size and are 6.3x apart. The last two have neither cell size nor step in common, share
+only a `v_guar` (to within 0.2%), and are 3.3% apart. Across the whole grid, pairing configurations at the same knot gap,
 two sharing a cell size but not a step typically differ by 1.7x in missed events, and two sharing a `v_guar` (to within
 2%) by 10%.
 

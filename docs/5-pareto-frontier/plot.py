@@ -65,7 +65,7 @@ ax.grid(True, alpha=0.3)
 ax2.plot(frontier['total_s'], frontier['safe_only'], 'o-', color='#D62839',
          linewidth=2, markersize=9, zorder=3)
 for _, r in frontier.iterrows():
-    ax2.annotate(f"s{r['step_s']:.4g} g{r['knot_gap_s']:.0f} c{r['cell_km']:.0f}",
+    ax2.annotate(f"s{r['step_s']:.4g} g{r['knot_gap_s']:.0f} c{r['cell_km']:g}",
                  (r['total_s'], r['safe_only']), textcoords='offset points',
                  xytext=(7, 3), fontsize=8, color='#D62839')
 ax2.set_yscale('log')
