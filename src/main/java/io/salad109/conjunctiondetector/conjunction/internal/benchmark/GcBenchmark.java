@@ -52,6 +52,7 @@ public class GcBenchmark extends BenchmarkRunner implements CommandLineRunner {
         log.info("Locked: tolerance={} km, step={} s, stride={}, cell={} km",
                 TOLERANCE_KM, STEP_SECONDS, INTERPOLATION_STRIDE, CELL_KM);
 
+        warmup(satellites);
         List<BenchmarkResult> results = runIterations(satellites,
                 new ScanParams(TOLERANCE_KM, STEP_SECONDS, INTERPOLATION_STRIDE, CELL_KM), ITERATIONS);
 

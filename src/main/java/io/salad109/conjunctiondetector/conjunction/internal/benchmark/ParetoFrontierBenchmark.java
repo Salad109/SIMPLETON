@@ -74,7 +74,8 @@ public class ParetoFrontierBenchmark extends BenchmarkRunner implements CommandL
         log.info("Loaded {} satellites", satellites.size());
         log.info("Using fixed start time: {}", FIXED_START_TIME);
 
-        log.info("Ground truth (stride={}, also serves as JVM warmup)...", BASELINE_STRIDE);
+        warmup(satellites);
+        log.info("Ground truth (stride={})...", BASELINE_STRIDE);
         ScanParams baseline = new ScanParams(TOLERANCE_KM, STEP_SECONDS_VALUES[0], BASELINE_STRIDE, BASELINE_CELL_KM);
         BenchmarkResult groundTruthResult = runBenchmark(satellites, baseline);
         List<EventKey> safeEvents = groundTruthResult.refinedEvents();

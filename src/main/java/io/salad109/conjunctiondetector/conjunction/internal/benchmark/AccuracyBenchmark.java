@@ -70,6 +70,7 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
         log.info("Fixed tolerance: {} km, threshold: {} km, lookahead: {} h",
                 TOLERANCE_KM, THRESHOLD_KM, LOOKAHEAD_HOURS);
 
+        warmup(satellites);
         List<EventKey> safeEvents = runBaseline(satellites);
 
         for (Sweep s : sweeps()) {

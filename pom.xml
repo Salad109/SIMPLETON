@@ -203,6 +203,8 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <!-- Use C2 -->
+                    <optimizedLaunch>false</optimizedLaunch>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
