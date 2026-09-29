@@ -51,7 +51,7 @@
     let orbitB = PRESETS[0].orbitB;
     let phases = {mAOffset: 0, mBOffset: 0};
 
-    const DEFAULTS = {tolerance: 84, cellSize: 74.0, stepSeconds: 10.8, stride: 32};
+    const DEFAULTS = {tolerance: 84, cellSize: 76.5, stepSeconds: 10.8, stride: 32};
 
     const HALF_NEIGHBORS_2D = [
         {dx: 1, dy: 0},

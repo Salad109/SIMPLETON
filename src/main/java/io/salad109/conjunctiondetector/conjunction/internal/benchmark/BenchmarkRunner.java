@@ -31,7 +31,7 @@ abstract class BenchmarkRunner {
             .of(2026, 8, 3, 18, 0, 0, 0, ZoneOffset.UTC);
     // Warm up on the deployed config for C2 to settle.
     private static final int WARMUP_ITERATIONS = 3;
-    private static final ScanParams WARMUP_PARAMS = new ScanParams(84.0, 10.8, 32, 74.0);
+    private static final ScanParams WARMUP_PARAMS = new ScanParams(84.0, 10.8, 32, 76.5);
     private static final Logger log = LoggerFactory.getLogger(BenchmarkRunner.class);
     protected final SatelliteService satelliteService;
     protected final PropagationService propagationService;

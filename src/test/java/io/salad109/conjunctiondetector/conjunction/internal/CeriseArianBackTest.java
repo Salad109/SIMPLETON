@@ -91,7 +91,7 @@ class CeriseArianBackTest {
     void fullPipelineDetectsMultiplePasses() {
 
         double toleranceKm = 84.0;
-        double cellSizeKm = 74.0;
+        double cellSizeKm = 76.5;
         double stepSeconds = 10.8;
         int interpolationStride = 32;
         double thresholdKm = 5.0;
