@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
 
-class CeriseArianBackTest {
+class CeriseArianeBackTest {
 
     // Last TLEs before collision, from Space-Track GP history
     // CERISE (NORAD ID 23606)
