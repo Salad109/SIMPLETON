@@ -41,23 +41,10 @@ class GroupAndReduceTest {
     }
 
     @Test
-    void gapOfExactlyThreeStaysInSameEvent() {
+    void missingStepSplits() {
         List<CoarseDetection> detections = List.of(
                 new CoarseDetection(PAIR_AB, 25.0, 10),
-                new CoarseDetection(PAIR_AB, 9.0, 13)
-        );
-
-        List<CoarseDetection> result = scanService.groupAndReduce(detections);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().distanceSq()).isEqualTo(9.0);
-    }
-
-    @Test
-    void gapOfFourSplits() {
-        List<CoarseDetection> detections = List.of(
-                new CoarseDetection(PAIR_AB, 25.0, 10),
-                new CoarseDetection(PAIR_AB, 9.0, 14)
+                new CoarseDetection(PAIR_AB, 9.0, 12)
         );
 
         List<CoarseDetection> result = scanService.groupAndReduce(detections);

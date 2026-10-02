@@ -61,8 +61,8 @@ public class ScanService {
     }
 
     /**
-     * Sort detections, cluster by pair and step gap, extract the best detection per event.
-     * Two detections belong to the same event if they're within 3 steps of each other.
+     * Sort detections, cluster by pair and consecutive steps, extract the best detection per event.
+     * Two detections belong to the same event if they're on adjacent steps.
      */
     public List<CoarseDetection> groupAndReduce(List<CoarseDetection> detections) {
         if (detections.isEmpty()) return List.of();
@@ -83,8 +83,8 @@ public class ScanService {
             CoarseDetection prev = sorted.get(i - 1);
             CoarseDetection curr = sorted.get(i);
 
-            if (!curr.pair().equals(currentPair) || curr.stepIndex() - prev.stepIndex() > 3) {
-                // Event boundary: different pair or time gap > 3 steps
+            if (!curr.pair().equals(currentPair) || curr.stepIndex() != prev.stepIndex() + 1) {
+                // Event boundary: different pair or a step without a detection
                 bestPerEvent.add(best);   // emit winner of the finished event
                 best = curr;              // start new event with curr as initial best
                 currentPair = curr.pair();
