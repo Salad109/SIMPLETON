@@ -40,13 +40,13 @@ class ComputeKnotsTest {
 
     @ParameterizedTest(name = "{0} s window, {1} s step, stride {2}")
     @CsvSource({
-            // window shapes, stride fixed at 50
+            // window shapes, stride 50 except the deployed subwindow
             "0, 9, 50",       // 1 step, no interval to interpolate
             "9, 9, 50",       // 2 steps, shorter than one stride
             "90, 9, 50",      // 11 steps, shorter than one stride
             "117, 9, 50",     // 14 steps, short final interval
-            "3690, 9, 50",    // 411 steps, the window from IridiumCosmosBackTest
-            "21600, 9, 50",   // 2401 steps, one subwindow of the tuned 24h/4 config
+            "3690, 9, 50",    // 411 steps, 10-step final interval
+            "21600, 10.8, 32", // 2001 steps, one subwindow of the deployed 24h/4 config, 16-step final interval
             // strides against a fixed 401-step window
             "3600, 9, 1",     // no interpolation
             "3600, 9, 7",     // never lands on the last step

@@ -153,16 +153,16 @@ class IridiumCosmosBackTest {
     @Test
     void detectsCollisionInTheShortFinalInterval() {
 
-        double toleranceKm = 72.0;
-        double cellSizeKm = 48.0;
-        double stepSeconds = 9;
-        int interpolationStride = 50;
+        double toleranceKm = 84.0;
+        double cellSizeKm = 76.5;
+        double stepSeconds = 10.8;
+        int interpolationStride = 32;
         double thresholdKm = 5.0;
 
-        // 411 steps with a stride of 50 put knots at 0, 50, ..., 400 and 410,
-        // and the collision falls at step 405, inside the short final interval.
-        OffsetDateTime startTime = COLLISION_TIME.minusSeconds(3645);
-        OffsetDateTime endTime = startTime.plusSeconds(3690);
+        // 2001 steps with a stride of 32 put knots at 0, 32, ..., 1984 and 2000,
+        // and the collision falls at step 1992, inside the 16-step final interval.
+        OffsetDateTime startTime = COLLISION_TIME.minus(Duration.ofMillis(21_513_600));
+        OffsetDateTime endTime = startTime.plusHours(6);
 
         List<SatelliteScanInfo> satellites = List.of(iridium(), cosmos());
         Map<Integer, TLEPropagator> propagators = propagationService.buildPropagators(satellites);
