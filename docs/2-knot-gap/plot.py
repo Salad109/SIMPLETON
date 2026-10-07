@@ -8,11 +8,12 @@ param_label = 'Knot Gap (s)'
 avg = df.groupby(param).mean(numeric_only=True).reset_index()
 sd = df.groupby(param)['total_s'].std()
 
-print(f"| Knot Gap (s) | Conjunctions | Jaccard | Missed | Miss err p99 | Total Time |")
-print(f"|---|---|---|---|---|---|")
+print(f"| Knot Gap (s) | Conjunctions | Jaccard | Missed | Extra | Miss err p99 | Total Time |")
+print(f"|---|---|---|---|---|---|---|")
 for _, row in avg.iterrows():
-    print(f"| {row[param]:.1f} | {int(round(row['conj'])):,} | {row['jaccard']:.5f} | "
-          f"{int(round(row['safe_only']))} | {row['miss_err_p99_m']:.3f} m | "
+    print(f"| {row[param]:.1f} | {int(round(row['conj'])):,} | "
+          f"{row['jaccard']:.5f} | {int(round(row['safe_only']))} | {int(round(row['ours_only']))} | "
+          f"{row['miss_err_p99_m']:.3f} m | "
           f"{row['total_s']:.1f}s +/- {sd[row[param]]:.1f} |")
 
 timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
@@ -62,9 +63,11 @@ plt.close()
 # 4 - accuracy
 fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(avg[param], avg['jaccard'], 'o-', color='#2E86AB', linewidth=2, markersize=7)
-ax.set_ylim(min(avg['jaccard'].min() - 0.005, 0.98), 1.001)
+pad = max(2e-5, (1 - avg['jaccard'].min()) * 0.1)
+ax.set_ylim(avg['jaccard'].min() - pad, 1 + pad)
+ax.ticklabel_format(axis='y', useOffset=False)
 ax.set_xlabel(param_label, fontsize=12)
-ax.set_ylabel('Jaccard vs stride=1 baseline', fontsize=12)
+ax.set_ylabel('Jaccard vs no-interpolation reference', fontsize=12)
 ax.set_title('Accuracy vs Knot Gap (s)', fontsize=14, fontweight='bold')
 ax.grid(True, alpha=0.3)
 plt.tight_layout()

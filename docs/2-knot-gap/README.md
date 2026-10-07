@@ -1,62 +1,63 @@
 # Knot Gap Sweep
 
 SGP4 runs only at knot points; Hermite cubic interpolation fills in every step between them, using position and velocity
-at both ends. The **knot gap** is the spacing between those SGP4 calls in seconds, and
-`interpolation-stride = knot_gap / step_seconds` is the derived config value.
+at both ends. The **knot gap** is the spacing between those SGP4 calls in seconds, rounded to a whole number of steps.
 
 ## Parameters
 
-- **tolerance-km**: 84, **step-seconds**: 9.375, **cell-size-km**: 70
+- **step-seconds**: 12, tolerance derived from it (93.7 km), **cell**: as wide as the tolerance
 - **threshold-km**: 5.0, **lookahead**: 24 h
 - **iterations**: 5 per configuration
 - **catalog**: 31,665 objects (element sets at most 10 days old, median age 8.7 h), one 24 h pass from 2026-08-03T18:00Z
 
 ## Results
 
-| Knot Gap | Stride | Conjunctions | Jaccard | Missed | Miss err p99 | Total Time |
-|----------|--------|--------------|---------|--------|--------------|------------|
-| 9.4 s    | 1      | 58,406       | 1.00000 | 0      | 0.000 m      | 99.4s      |
-| 37.5 s   | 4      | 58,406       | 0.99993 | 2      | 0.000 m      | 39.1s      |
-| 84.4 s   | 9      | 58,406       | 0.99983 | 5      | 0.000 m      | 27.8s      |
-| 121.9 s  | 13     | 58,406       | 0.99986 | 4      | 0.001 m      | 25.0s      |
-| 159.4 s  | 17     | 58,406       | 0.99986 | 4      | 0.002 m      | 24.3s      |
-| 196.9 s  | 21     | 58,406       | 0.99993 | 2      | 0.006 m      | 22.9s      |
-| 243.8 s  | 26     | 58,406       | 0.99990 | 3      | 0.030 m      | 21.9s      |
-| 281.3 s  | 30     | 58,406       | 0.99990 | 3      | 0.092 m      | 21.0s      |
-| 318.8 s  | 34     | 58,406       | 0.99993 | 2      | 0.296 m      | 21.6s      |
-| 356.3 s  | 38     | 58,405       | 0.99985 | 5      | 0.777 m      | 20.4s      |
-| 403.1 s  | 43     | 58,402       | 0.99983 | 7      | 2.348 m      | 20.7s      |
-| 440.6 s  | 47     | 58,389       | 0.99964 | 19     | 5.331 m      | 20.5s      |
-| 478.1 s  | 51     | 58,384       | 0.99955 | 24     | 11.448 m     | 19.9s      |
-| 515.6 s  | 55     | 58,358       | 0.99908 | 51     | 23.919 m     | 19.9s      |
-| 562.5 s  | 60     | 58,281       | 0.99776 | 128    | 53.864 m     | 19.6s      |
-| 600.0 s  | 64     | 58,131       | 0.99522 | 277    | 95.295 m     | 19.7s      |
-| 637.5 s  | 68     | 57,960       | 0.99226 | 449    | 162.340 m    | 19.4s      |
-| 684.4 s  | 73     | 57,537       | 0.98505 | 871    | 288.762 m    | 19.1s      |
-| 721.9 s  | 77     | 56,981       | 0.97547 | 1429   | 450.674 m    | 19.1s      |
-| 759.4 s  | 81     | 56,070       | 0.95980 | 2342   | 674.091 m    | 18.8s      |
-| 796.9 s  | 85     | 54,777       | 0.93763 | 3636   | 991.279 m    | 18.9s      |
-| 843.8 s  | 90     | 52,487       | 0.89850 | 5924   | 1490.119 m   | 18.9s      |
-| 881.3 s  | 94     | 49,855       | 0.85343 | 8556   | 2019.695 m   | 18.8s      |
-| 918.8 s  | 98     | 45,788       | 0.78390 | 12620  | 2656.746 m   | 19.1s      |
-| 956.3 s  | 102    | 40,790       | 0.69824 | 17621  | 3022.516 m   | 19.1s      |
-| 1003.1 s | 107    | 34,625       | 0.59264 | 23788  | 3222.684 m   | 18.9s      |
+| Knot Gap (s) | Conjunctions | Jaccard | Missed | Extra | Miss err p99 | Total Time |
+|--------------|--------------|---------|--------|-------|--------------|------------|
+| 12.0         | 58,406       | 1.00000 | 0      | 0     | 0.000 m      | 77.7s      |
+| 36.0         | 58,406       | 1.00000 | 0      | 0     | 0.000 m      | 37.6s      |
+| 84.0         | 58,406       | 1.00000 | 0      | 0     | 0.000 m      | 25.1s      |
+| 120.0        | 58,406       | 1.00000 | 0      | 0     | 0.001 m      | 22.6s      |
+| 156.0        | 58,406       | 1.00000 | 0      | 0     | 0.002 m      | 21.1s      |
+| 204.0        | 58,406       | 1.00000 | 0      | 0     | 0.008 m      | 19.8s      |
+| 240.0        | 58,406       | 1.00000 | 0      | 0     | 0.026 m      | 19.8s      |
+| 276.0        | 58,406       | 1.00000 | 0      | 0     | 0.081 m      | 19.1s      |
+| 324.0        | 58,405       | 0.99998 | 1      | 0     | 0.309 m      | 18.5s      |
+| 360.0        | 58,405       | 0.99998 | 1      | 0     | 0.819 m      | 18.2s      |
+| 396.0        | 58,402       | 0.99993 | 4      | 0     | 1.967 m      | 17.9s      |
+| 444.0        | 58,391       | 0.99974 | 15     | 0     | 5.846 m      | 18.1s      |
+| 480.0        | 58,374       | 0.99945 | 32     | 0     | 12.330 m     | 17.9s      |
+| 516.0        | 58,355       | 0.99913 | 51     | 0     | 23.700 m     | 17.8s      |
+| 564.0        | 58,272       | 0.99771 | 134    | 0     | 51.830 m     | 17.6s      |
+| 600.0        | 58,131       | 0.99529 | 275    | 0     | 95.326 m     | 17.6s      |
+| 636.0        | 57,969       | 0.99252 | 437    | 0     | 151.170 m    | 17.6s      |
+| 684.0        | 57,531       | 0.98502 | 875    | 0     | 288.628 m    | 17.5s      |
+| 720.0        | 57,009       | 0.97608 | 1397   | 0     | 446.163 m    | 17.6s      |
+| 756.0        | 56,130       | 0.96100 | 2277   | 1     | 650.365 m    | 17.6s      |
+| 804.0        | 54,522       | 0.93350 | 3884   | 0     | 1048.002 m   | 17.2s      |
+| 840.0        | 52,718       | 0.90258 | 5689   | 1     | 1454.003 m   | 17.4s      |
+| 876.0        | 50,270       | 0.86070 | 8136   | 0     | 1924.737 m   | 17.2s      |
+| 924.0        | 45,221       | 0.77425 | 13185  | 0     | 2763.377 m   | 17.4s      |
+| 960.0        | 40,080       | 0.68623 | 18326  | 0     | 3048.609 m   | 16.8s      |
+| 996.0        | 35,764       | 0.61233 | 22642  | 0     | 3161.809 m   | 17.1s      |
 
-Time saturates near 19 s while accuracy keeps falling. Everything past roughly 400 s buys under 2 s and costs missed
-events at an accelerating rate.
+The production gap, 252 s (21 steps), sits between the 240 s and 276 s rows.
+
+Nothing is lost up to 276 s, one event at 324 and 360 s, then losses accelerate: 4 at 396 s, 32 at 480 s, 275 at
+600 s. Time falls steeply at first, 78 s with an SGP4 call at every step to under 20 s by 204 s, then stays between 16.8
+and 18.5 s from
+324 s on. Past roughly 400 s the gap buys about a second and costs missed events at an accelerating rate.
 
 This is the only parameter that degrades events instead of just losing them. Miss distance error grows from 0 at short
-gaps to 3.2 km at 1000 s, because `refine` estimates the TCA from interpolated positions, and SGP4 evaluated at a
+gaps to 3.2 km (p99) at 996 s, because `refine` estimates the TCA from interpolated positions, and SGP4 evaluated at a
 slightly wrong TCA reads a larger separation.
 
-The same error is what loses events. An instrumented rerun of this sweep traced every missed event at six gaps. Through
-478 s every real loss passes the gate and fails the final check, SGP4 at the estimated TCA landing just above 5 km. From
-600 s a few are dropped earlier, at the gate, because the interpolated positions put their analytical minimum above
-6.5 km: 14 of the 277 misses at 600 s and 75 of the 3,636 at 797 s. The rest still fail the final check.
+The same error is what loses events: SGP4 at the misestimated TCA lands just above 5 km.
 
-The median plateau near 220 m in `5_miss_error.png` is an artifact of the metric, not a bound on the error. Miss error
-covers matched events only, and an event matches only if both runs put it within 5 km, so no matched event can differ by
-more than that. The worst-interpolated events are the ones pushed past the threshold and dropped, so the statistic
+The median plateau near 200 to 220 m in `5_miss_error.png` is an artifact of the metric, not a bound on the error.
+Miss error covers matched events only, and an event matches only if both runs put it within 5 km, so no matched event
+can differ by more than that. The worst-interpolated events are the ones pushed past the threshold and dropped, so the
+statistic
 saturates.
 
 ![Total Processing Time](1_total_time.png)

@@ -11,7 +11,7 @@ in about 20 seconds on consumer hardware.
 
 Validated against [CelesTrak SOCRATES](https://celestrak.org/SOCRATES/): when filtered to equivalent scope
 (payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.9% of SOCRATES events are
-also flagged by this pipeline, with TCA agreeing to 3 ms and miss distance to 0.7 m at p95 - see
+also flagged by this pipeline, with TCA agreeing to 1 ms and miss distance to 0.5 m at p95 - see
 [Validation](#validation) below for the breakdown. Full all-vs-all screening finds ~58,000 conjunctions per 24h window,
 including secondary pairs that SOCRATES excludes.
 
@@ -27,7 +27,7 @@ is dominated by TLE accuracy, not the screening.
 | Threshold        | 5 km (configurable)                          | 5 km                     |
 | Scope            | All-vs-all (~500M pairs)                     | Primaries vs secondaries |
 | 24h conjunctions | ~58,000 (~19,000 filtered to SOCRATES scope) | ~19,000                  |
-| Compute time     | ~20 seconds (~4,400x realtime)               | ~10 hours (17x realtime) |
+| Compute time     | ~20 seconds (~4,200x realtime)               | ~10 hours (17x realtime) |
 
 ## Why It Matters
 
@@ -48,8 +48,8 @@ The detection pipeline has four stages:
 ### 1. Propagation (SGP4 + Hermite interpolation)
 
 Rather than calling SGP4 at every timestep, the propagator stage evaluates SGP4 at knot points spaced minutes apart and
-fills intermediate positions using cubic Hermite interpolation on position and velocity. At the recommended 346 s knot
-gap that is one real SGP4 call per 32 steps, for 4 missed events out of ~58,000.
+fills intermediate positions using cubic Hermite interpolation on position and velocity. At the recommended 252 s knot
+gap that is one real SGP4 call per 21 steps, and the scan still reproduces a no-interpolation reference exactly.
 
 ### 2. Coarse sweep (spatial grid indexing)
 
@@ -63,11 +63,11 @@ event.
 
 ### 4. Refinement
 
-Between two interpolated timesteps (~11 seconds apart), relative motion is effectively linear, so squared distance is
+Between two interpolated timesteps (12 seconds apart), relative motion is effectively linear, so squared distance is
 quadratic, therefore the minimum of a quadratic is just one division. No golden section, no Brent's method, no iterative
-SGP4 calls. Most candidates get discarded here because the analytical minimum exceeds the 5 km threshold. Only survivors
-get a single SGP4 call to confirm. Events that pass are scored with collision probability synthesized from empirical
-SGP4 error models.
+SGP4 calls. Most candidates get discarded here because the analytical minimum exceeds the 5 km threshold plus a margin.
+Only survivors get a single SGP4 call to confirm. Events that pass are scored with collision probability synthesized
+from empirical SGP4 error models.
 
 ## Validation
 
@@ -75,51 +75,40 @@ Both pipelines were run on the same TLE catalog over the same 7-day window with 
 (primary-vs-all, intra-constellation excluded, formation-flight excluded). Events match when both pipelines flag the
 same satellite pair with TCAs within 1 minute.
 
-| Events         |   Count |
-|----------------|--------:|
-| SOCRATES total | 134,598 |
-| Our total      | 134,763 |
-| Matched        | 134,477 |
-| Ours only      |     286 |
-| Missed         |     121 |
+| Events          |   Count |
+|-----------------|--------:|
+| SOCRATES total  | 134,598 |
+| SIMPLETON total | 134,758 |
+| Matched         | 134,472 |
+| SIMPLETON only  |     286 |
+| SOCRATES only   |     126 |
 
 99.9% of SOCRATES events are also flagged by this pipeline. 99.8% of this pipeline's events are also flagged by
 SOCRATES. Agreement is flat at 99.7%+ across all seven days.
 
-![ΔTCA and Δmiss-distance error distributions vs SOCRATES](docs/8-socrates-comparison/1_errors.png)
+![ΔTCA and Δmiss-distance error distributions vs SOCRATES](docs/7-socrates-comparison/1_errors.png)
 
-On matched events, TCA agrees to 3 ms and miss distance to 0.7 m at p95.
+On matched events, TCA agrees to 1 ms and miss distance to 0.5 m at p95.
 
 Methodology, TLE replication procedure, and analysis of the remaining 0.1% available
-at [docs/8](docs/8-socrates-comparison).
+at [docs/7](docs/7-socrates-comparison).
 
 ## Parameter Tuning
 
-The [docs/](docs) directory contains experiments from benchmarking each tunable parameter. Individually safe choices
-interact when combined, so the Pareto analysis sweeps all parameters simultaneously to find winning combinations.
+The [docs/](docs) directory contains experiments from benchmarking each tunable parameter. The coarse tolerance and the
+grid cell are derived from the step using an equation, which leaves the step and the knot gap as the only free
+parameters.
 
-| # | Experiment                                            | Description                                 |
-|---|-------------------------------------------------------|---------------------------------------------|
-| 1 | [Step Size](docs/1-step-size)                         | Coarse scan time step in seconds            |
-| 2 | [Knot Gap](docs/2-knot-gap)                           | Seconds between real SGP4 calls             |
-| 3 | [Cell Size](docs/3-cell-size)                         | Spatial grid cell edge in km                |
-| 4 | [Conjunction Tolerance](docs/4-conjunction-tolerance) | Coarse scan distance threshold in km        |
-| 5 | [Pareto Frontier](docs/5-pareto-frontier)             | All parameters simultaneously               |
-| 6 | [Garbage Collector](docs/6-gc)                        | GC impact on pipeline throughput            |
-| 7 | [Subwindow Count](docs/7-subwindow-count)             | Memory partitioning for peak heap reduction |
+Fastest configuration at each accuracy level:
 
-Selected Pareto-optimal configurations:
+| Step (s) | Knot gap | Jaccard     | Missed | Extra | Time      |
+|----------|----------|-------------|--------|-------|-----------|
+| **12**   | **252s** | **1.00000** | **0**  | **0** | **19.2s** |
+| 9        | 351s     | 0.99998     | 0      | 1     | 18.2s     |
+| 9        | 450s     | 0.99973     | 15     | 1     | 17.9s     |
+| 10.8     | 497s     | 0.99949     | 30     | 0     | 17.7s     |
 
-| Step (s) | Knot gap | Cell (km) | Stride | Jaccard     | Missed | Time      |
-|----------|----------|-----------|--------|-------------|--------|-----------|
-| 9.375    | 197s     | 66.5      | 21     | 0.99993     | 2      | 21.4s     |
-| 10.0     | 250s     | 71.5      | 25     | 0.99990     | 3      | 19.2s     |
-| **10.8** | **346s** | **76.5**  | **32** | **0.99988** | **4**  | **17.5s** |
-| 10.8     | 497s     | 74.0      | 46     | 0.99935     | 34     | 16.8s     |
-| 10.8     | 454s     | 61.5      | 42     | 0.99777     | 127    | 16.4s     |
-| 10.8     | 454s     | 51.5      | 42     | 0.98772     | 713    | 15.6s     |
-
-Default configuration (bold) is a good compromise, sitting right before the accuracy cliff.
+Default configuration (bold) is the fastest that reproduces the conservative reference exactly.
 
 ## Tech Stack
 
@@ -157,7 +146,7 @@ cp .env.example .env
 
 ### 2. Run
 
-```bash 
+```bash
 # Both PostgreSQL and the application
 docker compose up
 # Local

@@ -1,56 +1,57 @@
-# Cell Size Sweep
+# Cell Size
 
-`cell-size-km` is the edge of the cube cells the spatial grid buckets positions into. The grid compares each cell
-against itself and 13 half-neighbors, so a pair separated by more than one cell along any axis is never tested. Larger
-cells test more pairs per step and catch more, but smaller cells are cheaper.
+The spatial grid buckets positions into cube cells and compares each cell against itself and 13 half-neighbors, so a
+pair separated by more than one cell along any axis is never tested. Production makes the cell as wide as the tolerance:
+a pair inside the tolerance is then at most one cell apart on every axis, so the grid never drops a pair the tolerance
+keeps. The cell is not a configuration value. This sweep moves it to either side of the tolerance, as a fraction of it,
+at every step, to see what narrowing it would lose and what widening it would cost.
 
 ## Parameters
 
-- **tolerance-km**: 84, **step-seconds**: 9.375
-- **knot gap**: 197 s
-- **threshold-km**: 5.0, **lookahead**: 24 h
-- **iterations**: 5 per configuration
+- **steps**: 6, 7.2, 8, 9, 10, 10.8, 12, 13.5, 15 s, tolerance derived from each (`docs/4`)
+- **cell / tolerance**: 0.5 to 1.2 in 0.05 steps
+- **knot gap**: 252 s, **threshold-km**: 5.0, **lookahead**: 24 h
+- **iterations**: 1 per configuration (accuracy is deterministic), propagation shared by every cell at a step
 - **catalog**: 31,665 objects (element sets at most 10 days old, median age 8.7 h), one 24 h pass from 2026-08-03T18:00Z
 
 ## Results
 
-| Cell (km) | Conjunctions | Jaccard | Missed | v_guar    | Total Time |
-|-----------|--------------|---------|--------|-----------|------------|
-| 84        | 58,406       | 0.99993 | 2      | 17.9 km/s | 23.9s      |
-| 80        | 58,406       | 0.99993 | 2      | 17.0 km/s | 23.0s      |
-| 76        | 58,406       | 0.99993 | 2      | 16.2 km/s | 23.1s      |
-| 72        | 58,406       | 0.99993 | 2      | 15.3 km/s | 22.4s      |
-| 68        | 58,406       | 0.99993 | 2      | 14.5 km/s | 23.2s      |
-| 64        | 58,396       | 0.99976 | 12     | 13.6 km/s | 22.8s      |
-| 60        | 58,397       | 0.99974 | 12     | 12.8 km/s | 22.0s      |
-| 58        | 58,375       | 0.99937 | 34     | 12.3 km/s | 22.4s      |
-| 56        | 58,357       | 0.99906 | 52     | 11.9 km/s | 21.7s      |
-| 54        | 58,319       | 0.99841 | 90     | 11.5 km/s | 21.8s      |
-| 52        | 58,244       | 0.99712 | 165    | 11.0 km/s | 21.2s      |
-| 50        | 58,180       | 0.99603 | 229    | 10.6 km/s | 21.6s      |
-| 48        | 58,053       | 0.99385 | 356    | 10.2 km/s | 21.2s      |
-| 46        | 57,849       | 0.99036 | 560    | 9.8 km/s  | 20.9s      |
-| 44        | 57,683       | 0.98748 | 727    | 9.3 km/s  | 20.9s      |
-| 42        | 57,341       | 0.98163 | 1069   | 8.9 km/s  | 20.1s      |
-| 40        | 56,941       | 0.97478 | 1469   | 8.5 km/s  | 19.6s      |
-| 38        | 56,472       | 0.96672 | 1939   | 8.0 km/s  | 19.6s      |
-| 36        | 55,856       | 0.95617 | 2555   | 7.6 km/s  | 18.8s      |
+![Missed / Extra Events](1_accuracy_heatmap.png)
 
-Accuracy is steady at 68 km and above. Going lower loses more and more events.
+The 1.00 row reproduces the step sweep (`docs/1`) exactly at the eight steps both share: its few mismatches come from the
+tolerance, not the grid. Grid loss is what a narrower cell misses beyond that row.
 
-Losses follow the guarantee `v_guar = 2 * sqrt(min(cell_size, tolerance)^2 - threshold^2) / step` derived in `docs/1`.
-They stay in the noise while the guarantee is above roughly 14 km/s and climb steeply once it drops below, the same
-threshold the step size sweep shows.
+| Cell / tolerance | Grid loss, min to max over the 9 steps |
+|------------------|----------------------------------------|
+| 0.95             | 0 to 0                                 |
+| 0.90             | 0 to 2                                 |
+| 0.85             | 4 to 10                                |
+| 0.80             | 19 to 33                               |
+| 0.75             | 52 to 82                               |
+| 0.70             | 173 to 205                             |
+| 0.65             | 358 to 421                             |
+| 0.60             | 697 to 808                             |
+| 0.55             | 1339 to 1430                           |
+| 0.50             | 2292 to 2460                           |
 
-Capture is bounded by `min(cell_size, tolerance)`, and tolerance is 84 km here, so cells at or above 84 km cannot raise
-the guarantee no matter how wide they get. Widening past the tolerance is pointless.
+Grid loss depends on the fraction and not on the cell in km: at each fraction it is about the same at every step,
+though the cell spans 47 to 117 km at 1.00. 0.95 loses nothing at any step, 0.90 at most 2, and the loss climbs steeply
+below. The grid's own guarantee, `v_guar = 2 * sqrt(cell^2 - threshold^2) / step`, is the tolerance's form (`docs/4`)
+with the cell in its place, close to the fraction times 15.6 km/s at every step: 14.8 km/s at 0.95, 14.0 km/s at 0.90.
+0.95 is lossless on this catalog only; 1.00 is lossless on any.
 
-Miss distance error is 0.006 m at every cell size. Cell size determines if events get detected, it doesn't corrupt them.
+A narrower cell also adds up to 5 extra events, more at shorter steps; from 0.95 up the extras equal the 1.00 row. Every
+one traced (6 and 8 s, at 0.5, 0.8 and 0.9) is a slow pair, 4 to 65 m/s, that stays inside the tolerance between two
+real closest approaches 47 min to 12 h apart. At 1.00 that is one unbroken run of detections, reported once at its
+closest. A narrower cell skips the steps where the pair sits more than one cell apart on some axis, the run breaks, and
+the other approach is reported too. Each is a true minimum of the separation under 5 km, and nothing is missed in
+exchange.
 
-![Total Processing Time](1_total_time.png)
+![Scan Time](2_scan_time_heatmap.png)
 
-![Time Breakdown](2_time_breakdown.png)
+Widening the cell from 1.00 to 1.20 records the same detections at every step and adds 0.6 to 1.6 s of scan time (check,
+grouping and refinement): larger cells hand the distance check more pairs that the tolerance then rejects. Narrowing it
+to 0.90 saves at most 0.7 s, and at three steps it is slower; 0.50 saves 1.0 to 4.0 s for 2,292 to 2,460 lost events.
 
-![Time Breakdown Stacked](3_time_breakdown_stacked.png)
-
-![Accuracy](4_accuracy.png)
+Miss distance error is 0.035 to 0.044 m (p99) everywhere. The cell changes which pairs are compared, not the precision
+of the ones that survive.

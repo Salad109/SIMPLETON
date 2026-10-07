@@ -5,37 +5,49 @@ to compute and scan, but less chance of skipping a close approach between sample
 
 ## Parameters
 
-- **tolerance-km**: 84, **cell-size-km**: 70
-- **knot gap**: 200 s
+- **tolerance**: derived from the step, `sqrt(5^2 + (15.6 * step / 2)^2)` km (see `docs/4`)
+- **cell**: as wide as the tolerance
+- **knot gap**: 252 s
 - **threshold-km**: 5.0, **lookahead**: 24 h
 - **iterations**: 5 per configuration
 - **catalog**: 31,665 objects (element sets at most 10 days old, median age 8.7 h), one 24 h pass from 2026-08-03T18:00Z
 
 ## Results
 
-| Step (s) | Stride | Conjunctions | Jaccard | Missed | v_guar    | Miss err p99 | Total Time |
-|----------|--------|--------------|---------|--------|-----------|--------------|------------|
-| 6.000    | 33     | 58,406       | 0.99990 | 3      | 23.3 km/s | 0.006 m      | 32.7s      |
-| 6.750    | 30     | 58,406       | 0.99990 | 3      | 20.7 km/s | 0.007 m      | 29.2s      |
-| 7.200    | 28     | 58,406       | 0.99990 | 3      | 19.4 km/s | 0.007 m      | 27.5s      |
-| 8.000    | 25     | 58,406       | 0.99983 | 5      | 17.5 km/s | 0.007 m      | 25.2s      |
-| 9.000    | 22     | 58,406       | 0.99990 | 3      | 15.5 km/s | 0.006 m      | 22.9s      |
-| 9.375    | 21     | 58,406       | 0.99993 | 2      | 14.9 km/s | 0.006 m      | 23.3s      |
-| 10.000   | 20     | 58,403       | 0.99985 | 6      | 14.0 km/s | 0.007 m      | 21.5s      |
-| 10.800   | 19     | 58,387       | 0.99957 | 22     | 12.9 km/s | 0.008 m      | 20.8s      |
-| 12.000   | 17     | 57,590       | 0.98593 | 819    | 11.6 km/s | 0.008 m      | 18.9s      |
-| 13.500   | 15     | 55,225       | 0.94547 | 3183   | 10.3 km/s | 0.007 m      | 16.8s      |
+| Step (s)   | Tolerance   | Knot Gap    | Conjunctions | Jaccard     | Missed | Extra | Miss err p99 | Total Time |
+|------------|-------------|-------------|--------------|-------------|--------|-------|--------------|------------|
+| 6.000      | 47.1 km     | 252.0 s     | 58,408       | 0.99990     | 2      | 4     | 0.037 m      | 23.7s      |
+| 6.750      | 52.9 km     | 249.8 s     | 58,409       | 0.99991     | 1      | 4     | 0.038 m      | 21.8s      |
+| 7.200      | 56.4 km     | 252.0 s     | 58,410       | 0.99993     | 0      | 4     | 0.038 m      | 20.7s      |
+| 8.000      | 62.6 km     | 256.0 s     | 58,406       | 0.99997     | 1      | 1     | 0.044 m      | 20.2s      |
+| 9.000      | 70.4 km     | 252.0 s     | 58,407       | 0.99998     | 0      | 1     | 0.038 m      | 19.6s      |
+| 9.375      | 73.3 km     | 253.1 s     | 58,406       | 0.99997     | 1      | 1     | 0.042 m      | 19.6s      |
+| 10.000     | 78.2 km     | 250.0 s     | 58,407       | 0.99998     | 0      | 1     | 0.037 m      | 19.7s      |
+| 10.800     | 84.4 km     | 248.4 s     | 58,405       | 0.99998     | 1      | 0     | 0.037 m      | 19.1s      |
+| **12.000** | **93.7 km** | **252.0 s** | **58,406**   | **1.00000** | **0**  | **0** | **0.038 m**  | **19.9s**  |
+| 13.500     | 105.4 km    | 256.5 s     | 58,405       | 0.99998     | 1      | 0     | 0.044 m      | 19.7s      |
 
-From 6 s to 10 s the miss count stays between 2 and 6 out of 58,406, which is effectively noise, while cost drops from
-32.7 s to 21.5 s. Accuracy starts falling rapidly past 10.8 s.
+Bold row is the production step.
 
-A conjunction is only guaranteed to be sampled inside the capture radius when
-`min(cell_size, tolerance)^2 >= threshold^2 + (v_rel * step / 2)^2`. At closest approach the relative velocity is
-perpendicular to the miss vector, so the miss and the distance covered in half a step are the legs of a right triangle.
-Solving for the relative velocity:
-`v_guar = 2 * sqrt(min(cell_size, tolerance)^2 - threshold^2) / step`
+The tolerance and the cell both follow the step (`docs/4`), so every step captures every pair closing under 15.6 km/s
+and the step is not an accuracy setting. Every step from 6 to
+13.5 s stays within 6 mismatched events of the reference. Time falls from 23.7 s at 6 s and then stays between 19.1 and
+19.9 s from 9 s up: a longer step scans fewer steps, so the coarse scan drops from 16.8 to 10.4 s, but each step admits
+more detections through its wider tolerance, so grouping grows from 1.2 to 4.2 s.
 
-Miss distance error is flat across the whole sweep at 0.006 to 0.008 m. Step size either captures an event or does not.
+Every mismatch was traced event by event against a fine SGP4 search for the true closest approach.
+
+Every missed event is a pair closing faster than the 15.6 km/s the tolerance is sized for (15.9 to 17.1 km/s), which
+was 0.04 to 2.1 km outside the tolerance at its nearest sampled step. The tolerance trades these few for its size
+(`docs/4`).
+
+Every extra event is real. Four pairs drifting at 4 to 90 m/s each have two minima under 5 km, 47 min to 12 h apart.
+Between them the pair drifts 58 to 83 km apart, so a step whose tolerance is narrower than that sees the pair leave
+range and reports two events, while the reference's 84 km keeps it in range and reports one. Three pairs drift under
+62.6 km and split only up to 7.2 s, the fourth drifts 83.4 km and splits up to 10 s. From 10.8 s the tolerance spans
+all four.
+
+Miss distance error is flat across the whole sweep at 0.037 to 0.044 m. Step size either captures an event or does not.
 It doesn't degrade captured ones.
 
 ![Total Processing Time](1_total_time.png)

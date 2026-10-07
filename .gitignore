@@ -7,10 +7,10 @@ target/
 *.so
 docs/*.csv
 stuff/
-docs/8-socrates-comparison/*.csv
-docs/8-socrates-comparison/active.txt
-docs/8-socrates-comparison/.cache/
-docs/8-socrates-comparison/__pycache__/
+docs/7-socrates-comparison/*.csv
+docs/7-socrates-comparison/active.txt
+docs/7-socrates-comparison/.cache/
+docs/7-socrates-comparison/__pycache__/
 thesis/
 
 ### STS ###

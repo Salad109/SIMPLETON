@@ -19,7 +19,7 @@ variable we replicate SOCRATES's TLE set exactly:
 
 1. `socrates.csv` carries `DSE_1` and `DSE_2` (days since each side's TLE epoch) for every conjunction. For each NORAD
    that appears in any row, compute target TLE epoch as `TCA - DSE days`.
-2. `socrates-catalog-sync.py` pulls Space-Track `gp_history` in over a 30-day window ending at 2026-05-09 19:00 UTC.
+2. `socrates-catalog-sync.py` pulls Space-Track `gp_history` over a 30-day window ending at 2026-05-09 19:00 UTC.
 3. For each NORAD, take the `gp_history` rows whose EPOCH is within 60 s of the target, and pick the one created last
    before SOCRATES pulled its catalog (`T_SNAPSHOT`, 2026-05-09 18:22:40 UTC).
 4. Write the result to CSV and load it into the local Postgres `satellite` table via
@@ -32,7 +32,7 @@ SOCRATES approaches by more than 100 km.
 ### Our screening run
 
 `SocratesComparisonBenchmark` runs the pipeline once over the 168 h window starting at 2026-05-09 19:00 UTC, reading
-from the reconstructed `satellite` table. The 5 km refinement output is dumped to `ours.csv`.
+from the reconstructed `satellite` table, with the shipped configuration. The 5 km refinement output is dumped to `ours.csv`.
 
 ### Scoping filters
 
@@ -57,57 +57,59 @@ matching:
 A conjunction is between two satellites. Two events match if they involve the same pair of satellites and their times of
 closest approach are within 1 minute of each other.
 
-| Events                                   |   Count |                                         |
-|------------------------------------------|--------:|----------------------------------------:|
-| SOCRATES total                           | 134,598 |                                         |
-| Our total                                | 134,763 |                                         |
-| Matched (both flagged the same event)    | 134,477 |                                         |
-| Ours only (we flagged, SOCRATES did not) |     286 | **99.8%** of ours SOCRATES also flagged |
-| SOCRATES only (they flagged, we did not) |     121 |      **99.9%** of SOCRATES we also flag |
+| Events                                        |   Count |                                         |
+|-----------------------------------------------|--------:|----------------------------------------:|
+| SOCRATES total                                | 134,598 |                                         |
+| SIMPLETON total                               | 134,758 |                                         |
+| Matched (both flagged the same event)         | 134,472 |                                         |
+| SIMPLETON only (we flagged, SOCRATES did not) |     286 | **99.8%** of ours SOCRATES also flagged |
+| SOCRATES only (they flagged, we did not)      |     126 |      **99.9%** of SOCRATES we also flag |
 
 ## Physics agreement on matched events
 
-For the 134,477 events both pipelines flag:
+For the 134,472 events both pipelines flag:
 
 |               Quantity | Median |    p95 |
 |-----------------------:|-------:|-------:|
-|               ΔTCA (s) | -0.001 |  0.003 |
-|    Δmiss-distance (km) | 0.0001 | 0.0007 |
+|               ΔTCA (s) | -0.001 |  0.001 |
+|    Δmiss-distance (km) | 0.0000 | 0.0005 |
 | Δrelative-speed (km/s) |     ~0 | 0.0005 |
 
-TCA agrees to **3 ms** and miss distance to **0.7 m** at p95.
+TCA agrees to **1 ms** and miss distance to **0.5 m** at p95.
 
 ![ΔTCA and Δmiss-distance error distributions](1_errors.png)
 
 ## Agreement across the prediction window
 
-| Day | SOCRATES |   Ours | Matched | % of ours SOCRATES flagged | % of SOCRATES we flagged |
-|----:|---------:|-------:|--------:|---------------------------:|-------------------------:|
-|   1 |   19,283 | 19,258 |  19,235 |                      99.9% |                    99.8% |
-|   2 |   19,242 | 19,282 |  19,217 |                      99.7% |                    99.9% |
-|   3 |   19,079 | 19,117 |  19,072 |                      99.8% |                   100.0% |
-|   4 |   19,527 | 19,521 |  19,512 |                     100.0% |                    99.9% |
-|   5 |   19,258 | 19,301 |  19,243 |                      99.7% |                    99.9% |
-|   6 |   19,005 | 19,066 |  19,002 |                      99.7% |                   100.0% |
-|   7 |   19,204 | 19,218 |  19,196 |                      99.9% |                   100.0% |
+| Day | SOCRATES | SIMPLETON | Matched | % of ours SOCRATES flagged | % of SOCRATES we flagged |
+|----:|---------:|----------:|--------:|---------------------------:|-------------------------:|
+|   1 |   19,283 |    19,258 |  19,235 |                      99.9% |                    99.8% |
+|   2 |   19,242 |    19,283 |  19,218 |                      99.7% |                    99.9% |
+|   3 |   19,079 |    19,119 |  19,074 |                      99.8% |                   100.0% |
+|   4 |   19,527 |    19,523 |  19,514 |                     100.0% |                    99.9% |
+|   5 |   19,258 |    19,303 |  19,245 |                      99.7% |                    99.9% |
+|   6 |   19,005 |    19,066 |  19,002 |                      99.7% |                   100.0% |
+|   7 |   19,204 |    19,206 |  19,184 |                      99.9% |                    99.9% |
 
 Agreement is flat at 99.7%+ across all seven days.
 
-## The remaining 0.1
+## The remaining 0.1%
 
-![SOCRATES events we missed, by reported miss distance and relative velocity](2_missed_events.png)
+![SOCRATES-only events, by reported miss distance and relative velocity](2_missed_events.png)
 
-**121 SOCRATES only.** 106 close below 325 m/s: slow co-orbiting pairs that survived the 10 m/s filter. The 84 km
-tolerance merges successive approaches that SOCRATES reports separately, and we report the closest of them. 6 close at
-14.6-16.3 km/s, above the 14.1 km/s capture guarantee. Those are real screening losses. The last 9 sit at 4.952-5.000
-km, SOCRATES just under the wall and us just over.
+**126 SOCRATES only.** 119 close below 325 m/s: slow co-orbiting pairs that survived the 10 m/s filter.
+Between passes such a pair stays inside the 93.7 km tolerance, so its successive approaches form one run of detections
+and we report the run's closest, where SOCRATES reports each approach. For all 119 we report the pair at another
+approach at least as close. The last 7 sit at 4.952-5.000 km, SOCRATES just under the wall and us just over. None is a
+screening loss: replaying the step grid with reference SGP4, every SOCRATES event above 12 km/s is inside the tolerance
+at a sampled step.
 
-**286 ours only.** 1 is slow, and 1 sits 2 m inside the wall on a pair SOCRATES reports at another approach. SOCRATES
-does not report the pairs of the other 284, though both objects appear elsewhere in its output. Vallado's reference SGP4
-puts all 284 under 5 km. They do not gather at the wall: 21% sit in its last 0.5 km, as do 19% of matched events. 26%
-have orbital planes 175° or more apart (1.1% of matched events), and they thin out to ~0 at the start, middle and end of
-the window. George & Harvey (AMOS 2011) found both signatures in the misses of STK Advanced CAT's orbit path pre-filter.
-SOCRATES runs on STK CAT, but does not publish which pre-filters it enables.
+**286 SIMPLETON only.** 1 is slow, and 1 sits 2 m inside the wall on a pair SOCRATES reports at another approach.
+SOCRATES does not report the pairs of the other 284, though both objects appear elsewhere in its output. Vallado's
+reference SGP4 puts all 284 under 5 km. They do not gather at the wall: 21% sit in its last 0.5 km, as do 19% of matched
+events. 26% have orbital planes 175° or more apart (1.1% of matched events), and they thin out to ~0 at the start,
+middle and end of the window. George & Harvey (AMOS 2011) found both signatures in the misses of STK Advanced CAT's
+orbit path pre-filter. SOCRATES runs on STK CAT, but does not publish which pre-filters it enables.
 
 ## Inputs
 
@@ -115,7 +117,7 @@ SOCRATES runs on STK CAT, but does not publish which pre-filters it enables.
 serve the current lists, not the ones this comparison ran on.
 
 - socrates.csv: https://celestrak.org/SOCRATES/sort-minRange.csv as published 2026-05-10 07:02 UTC
-- satellite table: `python3 docs/8-socrates-comparison/socrates-catalog-sync.py` (reconstructs SOCRATES's TLE set from
+- satellite table: `python3 docs/7-socrates-comparison/socrates-catalog-sync.py` (reconstructs SOCRATES's TLE set from
   socrates.csv's DSE columns, pulls those exact TLEs from Space-Track, loads into Postgres)
 - ours.csv:
   `./mvnw spring-boot:run -Dspring-boot.run.profiles=benchmark-socrates -Dspring-boot.run.jvmArguments="-Xmx16g -Xms16g -XX:+AlwaysPreTouch -Dconjunction.schedule.cron=-"`

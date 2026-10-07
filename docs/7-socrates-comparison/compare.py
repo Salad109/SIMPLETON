@@ -120,8 +120,8 @@ def plot_error_histograms(matched, path):
     if matched.empty:
         return
     specs = [
-        (matched["delta_tca_sec"], "TCA Error (Ours - SOCRATES)", "ΔTCA (s)"),
-        (matched["delta_miss_km"], "Miss-Distance Error (Ours - SOCRATES)", "ΔMiss Distance (km)"),
+        (matched["delta_tca_sec"], "TCA Error (SIMPLETON - SOCRATES)", "ΔTCA (s)"),
+        (matched["delta_miss_km"], "Miss-Distance Error (SIMPLETON - SOCRATES)", "ΔMiss Distance (km)"),
     ]
     fig, axes = plt.subplots(2, 1, figsize=(9, 9))
     for ax, (values, title, xlabel) in zip(axes, specs):
@@ -176,13 +176,13 @@ def apply_socrates_filters(df, primary_ids, con_map):
 def run_match(soc, ours):
     matched, soc_un, ours_un = match_events(soc, ours, TCA_TOL_SEC)
     n_match, n_soc, n_ours = len(matched), len(soc), len(ours)
-    print(f"  Our events                    : {n_ours:>8,}")
-    print(f"  SOCRATES events               : {n_soc:>8,}")
-    print(f"  Matched                       : {n_match:>8,}")
-    print(f"  Ours only                     : {len(ours_un):>8,}")
-    print(f"  SOCRATES only                 : {len(soc_un):>8,}")
-    print(f"  % of ours SOCRATES also flags : {n_match/n_ours*100:.1f}%")
-    print(f"  % of SOCRATES we also flag    : {n_match/n_soc*100:.1f}%")
+    print(f"  SIMPLETON events                   : {n_ours:>8,}")
+    print(f"  SOCRATES events                    : {n_soc:>8,}")
+    print(f"  Matched                            : {n_match:>8,}")
+    print(f"  SIMPLETON only                     : {len(ours_un):>8,}")
+    print(f"  SOCRATES only                      : {len(soc_un):>8,}")
+    print(f"  % of SIMPLETON SOCRATES also flags : {n_match/n_ours*100:.1f}%")
+    print(f"  % of SOCRATES SIMPLETON also flags : {n_match/n_soc*100:.1f}%")
     return matched, soc_un, ours_un
 
 
@@ -205,10 +205,10 @@ def time_bucket_overlap(soc, ours, window_start, bucket_hours, n_buckets):
             "soc_in_ours": len(matched) / len(soc_b) if len(soc_b) else float("nan"),
         })
     df = pd.DataFrame(rows)
-    print(f"  {'day':<6} {'SOCRATES':>10} {'ours':>10} {'matched':>10} {'% of ours':>12} {'% of SOC':>10}")
+    print(f"  {'day':<6} {'SOCRATES':>10} {'SIMPLETON':>10} {'matched':>10} {'% of SIMPLETON':>15} {'% of SOC':>10}")
     for r in df.itertuples(index=False):
         print(f"  {r.day:<6} {r.soc:>10,} {r.ours:>10,} {r.matched:>10,} "
-              f"{r.ours_in_soc*100:>11.1f}% {r.soc_in_ours*100:>9.1f}%")
+              f"{r.ours_in_soc*100:>14.1f}% {r.soc_in_ours*100:>9.1f}%")
     return df
 
 
@@ -236,7 +236,7 @@ def plot_missed_events(missed, path):
     ax2.yaxis.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 5, 10]))
     ax2.grid(True, alpha=0.3)
 
-    fig.suptitle("SOCRATES Events We Missed", fontsize=14, fontweight="bold")
+    fig.suptitle("SOCRATES-Only Events", fontsize=14, fontweight="bold")
     fig.tight_layout()
     fig.savefig(path, dpi=300, bbox_inches="tight")
     plt.close(fig)
@@ -250,7 +250,7 @@ def main():
     ours = apply_socrates_filters(load_ours(HERE / "ours.csv"), primary_ids, con_map)
 
     print(f"  SOCRATES events: {len(soc):>8,}")
-    print(f"  Ours           : {len(ours):>8,}")
+    print(f"  SIMPLETON      : {len(ours):>8,}")
 
     print(f"\nEvent-level matching (|dTCA| <= {TCA_TOL_SEC:.0f} s)")
     matched, soc_un, _ = run_match(soc, ours)

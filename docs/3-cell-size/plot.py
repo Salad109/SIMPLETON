@@ -1,78 +1,93 @@
-import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from matplotlib.colors import LogNorm
+from matplotlib.patches import Rectangle
 
 df = pd.read_csv('conjunction_benchmark.csv')
-param = 'cell_km'
-param_label = 'Cell Size (km)'
-avg = df.groupby(param).mean(numeric_only=True).reset_index()
-sd = df.groupby(param)['total_s'].std()
 
 THRESHOLD_KM = 5.0
 
+df['ratio'] = df['cell_ratio'].round(2)
+steps = sorted(df['step_s'].unique())
+ratios = sorted(df['ratio'].unique())
 
-def v_guar(row):
-    radius = min(row['cell_km'], row['tolerance_km'])
-    return 2 * np.sqrt(radius ** 2 - THRESHOLD_KM ** 2) / row['step_s']
 
-print("| Cell (km) | Conjunctions | Jaccard | Missed | v_guar | Total Time |")
-print("|---|---|---|---|---|---|")
-for _, row in avg.sort_values(param, ascending=False).iterrows():
-    print(f"| {row[param]:.0f} | {int(round(row['conj'])):,} | {row['jaccard']:.5f} | "
-          f"{int(round(row['safe_only']))} | {v_guar(row):.1f} km/s | {row['total_s']:.1f}s |")
+def grid(col):
+    return df.pivot_table(index='ratio', columns='step_s', values=col).loc[ratios, steps]
 
-timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
-colors = ['#2ca02c', '#06A77D', '#e377c2', '#17becf', '#9467bd', '#D62839', '#8c564b']
-labels = ['Propagator Build', 'SGP4', 'Interpolation', 'Check Pairs', 'Grouping', 'Refine', 'Probability']
-markers = ['^', 'd', 'D', 'x', 'v', 'p', '*']
 
-# 1 - total time
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.errorbar(avg[param], avg['total_s'], yerr=sd.values, fmt='o-', color='#2E86AB',
-            markersize=7, capsize=3, linewidth=2)
-ax.set_xlabel(param_label, fontsize=12)
-ax.set_ylabel('Total Time (s)', fontsize=12)
-ax.set_title('Total Processing Time vs Cell Size', fontsize=14, fontweight='bold')
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig('1_total_time.png', dpi=300, bbox_inches='tight')
-plt.close()
+missed, extra, tol, cell = grid('safe_only'), grid('ours_only'), grid('tolerance_km'), grid('cell_km')
+scan_s = (df.assign(scan_s=df['check_s'] + df['grouping_s'] + df['refine_s'])
+          .pivot_table(index='ratio', columns='step_s', values='scan_s').loc[ratios, steps])
 
-# 2 - line per component
-fig, ax = plt.subplots(figsize=(12, 7))
-for col, color, marker, label in zip(timing_columns, colors, markers, labels):
-    ax.plot(avg[param], avg[col], marker=marker, linestyle='-', label=label,
-            color=color, linewidth=2, markersize=8)
-ax.set_xlabel(param_label, fontsize=12)
-ax.set_ylabel('Time (s)', fontsize=12)
-ax.set_title('Time Breakdown by Cell Size', fontsize=14, fontweight='bold')
-ax.legend(fontsize=10, ncol=2)
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig('2_time_breakdown.png', dpi=300, bbox_inches='tight')
-plt.close()
 
-# 3 - stacked area
-fig, ax = plt.subplots(figsize=(12, 7))
-ax.stackplot(avg[param], np.vstack([avg[c].values for c in timing_columns]),
-             labels=labels, colors=colors, alpha=0.8)
-ax.set_xlabel(param_label, fontsize=12)
-ax.set_ylabel('Time (s)', fontsize=12)
-ax.set_title('Time Breakdown Stacked by Cell Size', fontsize=14, fontweight='bold')
-ax.legend(fontsize=8, loc='upper left', ncol=2)
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig('3_time_breakdown_stacked.png', dpi=300, bbox_inches='tight')
-plt.close()
+def v_guar(cell_km, step):
+    return 2 * np.sqrt(cell_km ** 2 - THRESHOLD_KM ** 2) / step
 
-# 4 - accuracy
-fig, ax = plt.subplots(figsize=(10, 6))
-ax.plot(avg[param], avg['jaccard'], 'o-', color='#2E86AB', linewidth=2, markersize=7)
-ax.set_ylim(min(avg['jaccard'].min() - 0.005, 0.98), 1.001)
-ax.set_xlabel(param_label, fontsize=12)
-ax.set_ylabel('Jaccard vs stride=1 baseline', fontsize=12)
-ax.set_title('Accuracy vs Cell Size', fontsize=14, fontweight='bold')
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig('4_accuracy.png', dpi=300, bbox_inches='tight')
-plt.close()
+
+# The narrowest cell the grid adds no loss at, walking down from the production cell.
+print("| Step (s) | Tolerance | Missed at 1.00 | Narrowest without grid loss | v_guar there | Next narrower | Grid loss |")
+print("|---|---|---|---|---|---|---|")
+below = [r for r in ratios if r <= 1.0][::-1]
+for s in steps:
+    base, clean = missed.loc[1.0, s], 1.0
+    for r in below:
+        if missed.loc[r, s] > base:
+            break
+        clean = r
+    nxt = max((r for r in ratios if r < clean), default=None)
+    nxt_cell = f"{nxt:.2f} | {int(missed.loc[nxt, s] - base)}" if nxt is not None else "- | -"
+    print(f"| {s:g} | {tol.loc[1.0, s]:.1f} km | {int(base)} | {clean:.2f} ({cell.loc[clean, s]:.1f} km) | "
+          f"{v_guar(cell.loc[clean, s], s):.1f} km/s | {nxt_cell} |")
+
+# Grid loss by ratio, across steps
+print("\n| Cell / tolerance | Grid loss, min to max over steps |")
+print("|---|---|")
+for r in [r for r in ratios if r < 1.0][::-1]:
+    loss = missed.loc[r] - missed.loc[1.0]
+    print(f"| {r:.2f} | {int(loss.min())} to {int(loss.max())} |")
+
+# What a wider cell costs: scan time at the production cell and at the widest swept
+print(f"\n| Step (s) | Scan time at 1.00 | at {ratios[-1]:.2f} |")
+print("|---|---|---|")
+for s in steps:
+    print(f"| {s:g} | {scan_s.loc[1.0, s]:.1f}s | {scan_s.loc[ratios[-1], s]:.1f}s |")
+
+x, y = np.arange(len(steps)), np.arange(len(ratios))
+
+
+def heatmap(values, norm, label, fname, title, annotate):
+    fig, ax = plt.subplots(figsize=(11, 8))
+    im = ax.imshow(values.values, origin='lower', aspect='auto', cmap='Blues', norm=norm)
+    for i in range(len(ratios)):
+        for j in range(len(steps)):
+            v = values.values[i, j]
+            ax.text(j, i, annotate(i, j), ha='center', va='center', fontsize=7,
+                    color='white' if norm(v) > 0.6 else '#333333')
+    # Production: the cell as wide as the derived tolerance at every step
+    row = ratios.index(1.0)
+    ax.add_patch(Rectangle((-0.5, row - 0.5), len(steps), 1, fill=False, edgecolor='#d4a34a', lw=2.5,
+                           label='cell = derived tolerance sqrt(5^2 + (15.6 * step / 2)^2)'))
+    ax.set_xticks(x, [f'{s:g}' for s in steps])
+    ax.set_yticks(y, [f'{r:.2f}' for r in ratios])
+    ax.set_xlabel('Step (s)', fontsize=12)
+    ax.set_ylabel('Cell / derived tolerance', fontsize=12)
+    ax.set_title(title, fontsize=14, fontweight='bold')
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.08), fontsize=10, frameon=False)
+    fig.colorbar(im, ax=ax, label=label)
+    plt.tight_layout()
+    plt.savefig(fname, dpi=300, bbox_inches='tight')
+    plt.close()
+
+
+# 1 - accuracy; log colour on missed with 0 shown as the lightest cell, extras annotated alongside
+heatmap(missed.clip(lower=0.5), LogNorm(vmin=0.5, vmax=max(missed.values.max(), 1)),
+        'Missed events vs no-interpolation reference (log, 0 shown as 0.5)', '1_accuracy_heatmap.png',
+        'Missed / Extra Events by Step and Cell Size',
+        lambda i, j: f'{missed.values[i, j]:.0f} / {extra.values[i, j]:.0f}')
+
+# 2 - scan time; propagation is shared per step and does not depend on the cell
+heatmap(scan_s, plt.Normalize(scan_s.values.min(), scan_s.values.max()), 'Check + grouping + refine (s)',
+        '2_scan_time_heatmap.png', 'Scan Time by Step and Cell Size',
+        lambda i, j: f'{scan_s.values[i, j]:.1f}')

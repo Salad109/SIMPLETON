@@ -8,20 +8,12 @@ param_label = 'Step Size (s)'
 avg = df.groupby(param).mean(numeric_only=True).reset_index()
 sd = df.groupby(param)['total_s'].std()
 
-THRESHOLD_KM = 5.0
-
-
-def v_guar(row):
-    # The nearest sample is at most half a step from closest approach, and the miss and the half-step travel are
-    # the legs of a right triangle.
-    radius = min(row['cell_km'], row['tolerance_km'])
-    return 2 * np.sqrt(radius ** 2 - THRESHOLD_KM ** 2) / row['step_s']
-
-print("| Step (s) | Stride | Conjunctions | Jaccard | Missed | v_guar | Miss err p99 | Total Time |")
-print("|---|---|---|---|---|---|---|---|")
+print("| Step (s) | Tolerance | Knot Gap | Conjunctions | Jaccard | Missed | Extra | Miss err p99 | Total Time |")
+print("|---|---|---|---|---|---|---|---|---|")
 for _, row in avg.iterrows():
-    print(f"| {row[param]:.3f} | {int(round(row['interp_stride']))} | {int(round(row['conj'])):,} | "
-          f"{row['jaccard']:.5f} | {int(round(row['safe_only']))} | {v_guar(row):.1f} km/s | "
+    print(f"| {row[param]:.3f} | {row['tolerance_km']:.1f} km | {row['knot_gap_s']:.1f} s | "
+          f"{int(round(row['conj'])):,} | {row['jaccard']:.5f} | {int(round(row['safe_only']))} | "
+          f"{int(round(row['ours_only']))} | "
           f"{row['miss_err_p99_m']:.3f} m | {row['total_s']:.1f}s |")
 
 timing_columns = ['propagator_s', 'sgp4_s', 'interp_s', 'check_s', 'grouping_s', 'refine_s', 'probability_s']
@@ -71,9 +63,11 @@ plt.close()
 # 4 - accuracy
 fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(avg[param], avg['jaccard'], 'o-', color='#2E86AB', linewidth=2, markersize=7)
-ax.set_ylim(min(avg['jaccard'].min() - 0.005, 0.98), 1.001)
+pad = max(2e-5, (1 - avg['jaccard'].min()) * 0.1)
+ax.set_ylim(avg['jaccard'].min() - pad, 1 + pad)
+ax.ticklabel_format(axis='y', useOffset=False)
 ax.set_xlabel(param_label, fontsize=12)
-ax.set_ylabel('Jaccard vs stride=1 baseline', fontsize=12)
+ax.set_ylabel('Jaccard vs no-interpolation reference', fontsize=12)
 ax.set_title('Accuracy vs Step Size', fontsize=14, fontweight='bold')
 ax.grid(True, alpha=0.3)
 plt.tight_layout()
