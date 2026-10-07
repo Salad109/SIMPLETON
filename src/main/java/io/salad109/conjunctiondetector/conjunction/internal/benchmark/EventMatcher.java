@@ -6,6 +6,10 @@ import java.util.*;
 
 final class EventMatcher {
 
+    // Same cutoff CollisionProbabilityService uses.
+    // When two runs of a formation flight place its minimum is arbitrary, so match it by pair alone.
+    private static final double FORMATION_FLIGHT_MS = 10.0;
+
     private EventMatcher() {
     }
 
@@ -27,7 +31,8 @@ final class EventMatcher {
                 oursOnly++;
                 continue;
             }
-            EventKey best = findNearestUnclaimed(bucket, c.tca(), toleranceNanos, claimed);
+            long window = c.relativeVelocityMS() < FORMATION_FLIGHT_MS ? Long.MAX_VALUE : toleranceNanos;
+            EventKey best = findNearestUnclaimed(bucket, c.tca(), window, claimed);
             if (best == null) {
                 oursOnly++;
             } else {
