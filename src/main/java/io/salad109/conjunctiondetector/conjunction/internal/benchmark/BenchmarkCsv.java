@@ -38,9 +38,10 @@ final class BenchmarkCsv {
 
     enum Group {
         PARAMS(false,
-                col("tolerance_km", "%.0f", (r, s) -> r.params().toleranceKm()),
+                col("tolerance_km", "%.1f", (r, s) -> r.params().toleranceKm()),
                 col("step_s", "%.4f", (r, s) -> r.params().stepSeconds()),
                 col("cell_km", "%.1f", (r, s) -> r.params().cellSizeKm()),
+                col("cell_ratio", "%.3f", (r, s) -> r.params().cellSizeKm() / r.params().toleranceKm()),
                 col("interp_stride", "%d", (r, s) -> r.params().stride()),
                 col("knot_gap_s", "%.1f", (r, s) -> r.params().knotGapSeconds())),
         COUNTS(false,

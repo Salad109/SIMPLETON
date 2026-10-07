@@ -39,23 +39,17 @@ public class ConjunctionService {
     private final ApplicationEventPublisher eventPublisher;
     private final Clock clock;
 
-    @Value("${conjunction.tolerance-km:72.0}")
-    private double toleranceKm;
-
-    @Value("${conjunction.cell-size-km:55.38}")
-    private double cellSizeKm;
-
     @Value("${conjunction.collision-threshold-km:5.0}")
     private double thresholdKm;
 
     @Value("${conjunction.lookahead-hours:24}")
     private int lookaheadHours;
 
-    @Value("${conjunction.step-seconds:9.0}")
+    @Value("${conjunction.step-seconds:12}")
     private double stepSeconds;
 
-    @Value("${conjunction.interpolation-stride:50}")
-    private int interpolationStride;
+    @Value("${conjunction.knot-gap-seconds:252}")
+    private double knotGapSeconds;
 
     @Value("${conjunction.subwindow-count:4}")
     private int subwindowCount;
@@ -78,15 +72,12 @@ public class ConjunctionService {
         this.clock = clock;
     }
 
-    static void validate(double toleranceKm, double cellSizeKm, double thresholdKm, int lookaheadHours,
-                         double stepSeconds, int interpolationStride, int subwindowCount) {
-        if (toleranceKm <= 0) throw new IllegalStateException("conjunction.tolerance-km must be positive");
-        if (cellSizeKm <= 0) throw new IllegalStateException("conjunction.cell-size-km must be positive");
+    static void validate(double thresholdKm, int lookaheadHours,
+                         double stepSeconds, double knotGapSeconds, int subwindowCount) {
         if (thresholdKm <= 0) throw new IllegalStateException("conjunction.collision-threshold-km must be positive");
         if (lookaheadHours <= 0) throw new IllegalStateException("conjunction.lookahead-hours must be positive");
         if (stepSeconds <= 0) throw new IllegalStateException("conjunction.step-seconds must be positive");
-        if (interpolationStride <= 0)
-            throw new IllegalStateException("conjunction.interpolation-stride must be positive");
+        if (knotGapSeconds <= 0) throw new IllegalStateException("conjunction.knot-gap-seconds must be positive");
         if (subwindowCount <= 0) throw new IllegalStateException("conjunction.subwindow-count must be positive");
 
         // A subwindow boundary that falls between two steps leaves a sliver of the window unscanned
@@ -100,8 +91,7 @@ public class ConjunctionService {
 
     @PostConstruct
     void validateProperties() {
-        validate(toleranceKm, cellSizeKm, thresholdKm, lookaheadHours, stepSeconds, interpolationStride,
-                subwindowCount);
+        validate(thresholdKm, lookaheadHours, stepSeconds, knotGapSeconds, subwindowCount);
     }
 
     @Transactional(readOnly = true)
@@ -152,6 +142,8 @@ public class ConjunctionService {
         OffsetDateTime windowEnd = startedAt.plusHours(lookaheadHours);
         long subwindowNanos = Duration.between(startedAt, windowEnd).toNanos() / subwindowCount;
 
+        double toleranceKm = ScanService.coarseToleranceKm(stepSeconds, thresholdKm);
+        int interpolationStride = PropagationService.knotStride(stepSeconds, knotGapSeconds);
         List<ScanService.RefinedEvent> allRefined = new ArrayList<>();
 
         for (int w = 0; w < subwindowCount; w++) {
@@ -167,7 +159,7 @@ public class ConjunctionService {
 
             // Coarse sweep
             List<ScanService.CoarseDetection> detections = scanService.checkPairs(
-                    satellites, cache, toleranceKm, cellSizeKm);
+                    satellites, cache, toleranceKm, toleranceKm);
 
             // Sort, cluster, reduce to best-per-event
             List<ScanService.CoarseDetection> events = scanService.groupAndReduce(detections);

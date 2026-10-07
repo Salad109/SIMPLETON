@@ -5,7 +5,9 @@ import io.salad109.conjunctiondetector.conjunction.internal.PropagationService;
 import io.salad109.conjunctiondetector.conjunction.internal.ScanService;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jspecify.annotations.NonNull;
+import org.orekit.propagation.analytical.tle.TLEPropagator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
@@ -17,6 +19,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.DoubleStream;
 
 /**
@@ -32,15 +35,13 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
     private static final Logger log = LoggerFactory.getLogger(AccuracyBenchmark.class);
 
     private static final int ITERATIONS = 5;
-    // Center of the flat optimum band from docs/4.
-    private static final double TOLERANCE_KM = 84.0;
 
     // Locked values for whichever axes are not under test.
-    private static final double DEFAULT_STEP_SECONDS = 9.375;
-    private static final double DEFAULT_CELL_KM = 70.0;
-    private static final double DEFAULT_KNOT_GAP_SECONDS = 200.0;
+    private static final double DEFAULT_STEP_SECONDS = 12;
+    private static final double DEFAULT_KNOT_GAP_SECONDS = 252.0;
 
     // Ground truth. Safe margins on purpose
+    private static final double BASELINE_TOLERANCE_KM = 84.0;
     private static final double BASELINE_STEP_SECONDS = 9.375;
     private static final int BASELINE_STRIDE = 1;
     private static final double BASELINE_CELL_KM = 105.0;
@@ -49,8 +50,14 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
     // Every step divides the 6h subwindow into whole steps, so any winner is deployable unrounded.
     private static final double[] STEP_SECONDS_VALUES = {6, 6.75, 7.2, 8, 9, 9.375, 10, 10.8, 12, 13.5};
     private static final double[] KNOT_GAP_VALUES = {8, 40, 80, 120, 160, 200, 240, 280, 320, 360, 400, 440, 480, 520, 560, 600, 640, 680, 720, 760, 800, 840, 880, 920, 960, 1000};
-    private static final double[] CELL_KM_VALUES = {84, 80, 76, 72, 68, 64, 60, 58, 56, 54, 52, 50, 48, 46, 44, 42, 40, 38, 36};
-    private static final double[] TOLERANCE_VALUES = {24, 32, 40, 48, 56, 64, 72, 80, 88, 96, 104, 112, 120, 128, 136, 144, 152, 160};
+
+    private static final double[] GRID_STEP_SECONDS_VALUES = {6, 7.2, 8, 9, 10, 10.8, 12, 13.5, 15};
+    // Step x cell grid. The cell is a fraction of each step's derived tolerance, straddling production's 1.0.
+    private static final double[] GRID_CELL_RATIO_VALUES = {0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1.0, 1.05, 1.1, 1.15, 1.2};
+    private static final String CELL_GRID_DOCS_DIR = "3-cell-size";
+    // Step x tolerance grid. The tolerance is swept explicitly against the derived one.
+    private static final double[] GRID_TOLERANCE_VALUES = {40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0, 100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0};
+    private static final String TOLERANCE_GRID_DOCS_DIR = "4-conjunction-tolerance";
 
     public AccuracyBenchmark(SatelliteService satelliteService, PropagationService propagationService,
                              ScanService scanService, CollisionProbabilityService collisionProbabilityService) {
@@ -67,8 +74,7 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
         log.info("Loaded {} satellites", satellites.size());
 
         log.info("Using fixed start time: {}", FIXED_START_TIME);
-        log.info("Fixed tolerance: {} km, threshold: {} km, lookahead: {} h",
-                TOLERANCE_KM, THRESHOLD_KM, LOOKAHEAD_HOURS);
+        log.info("Threshold: {} km, lookahead: {} h", THRESHOLD_KM, LOOKAHEAD_HOURS);
 
         warmup(satellites);
         List<EventKey> safeEvents = runBaseline(satellites);
@@ -79,6 +85,9 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
             log.info("Locked: {}", s.locked());
             sweep(satellites, safeEvents, s);
         }
+        grid(satellites, safeEvents, CELL_GRID_DOCS_DIR, "cell ratio", GRID_CELL_RATIO_VALUES, ScanParams::of);
+        grid(satellites, safeEvents, TOLERANCE_GRID_DOCS_DIR, "tolerance", GRID_TOLERANCE_VALUES,
+                (step, stride, tol) -> new ScanParams(tol, step, stride, tol));
 
         log.info("Benchmark complete");
         System.exit(0);
@@ -87,38 +96,59 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
     private List<Sweep> sweeps() {
         return List.of(
                 new Sweep("step size", "1-step-size",
-                        "cell=" + DEFAULT_CELL_KM + "km, knotGap=" + DEFAULT_KNOT_GAP_SECONDS + "s",
+                        "cell=tolerance, knotGap=" + DEFAULT_KNOT_GAP_SECONDS + "s",
                         DoubleStream.of(STEP_SECONDS_VALUES)
-                                .mapToObj(s -> ScanParams.ofKnotGap(TOLERANCE_KM, s,
-                                        DEFAULT_KNOT_GAP_SECONDS, DEFAULT_CELL_KM))
+                                .mapToObj(s -> ScanParams.ofKnotGap(s, DEFAULT_KNOT_GAP_SECONDS))
                                 .toList()),
                 new Sweep("knot gap", "2-knot-gap",
-                        "step=" + DEFAULT_STEP_SECONDS + "s, cell=" + DEFAULT_CELL_KM + "km",
+                        "step=" + DEFAULT_STEP_SECONDS + "s, cell=tolerance",
                         DoubleStream.of(KNOT_GAP_VALUES)
-                                .mapToObj(g -> ScanParams.ofKnotGap(TOLERANCE_KM, DEFAULT_STEP_SECONDS,
-                                        g, DEFAULT_CELL_KM))
-                                .toList()),
-                new Sweep("cell size", "3-cell-size",
-                        "step=" + DEFAULT_STEP_SECONDS + "s, knotGap=" + DEFAULT_KNOT_GAP_SECONDS + "s",
-                        DoubleStream.of(CELL_KM_VALUES)
-                                .mapToObj(c -> ScanParams.ofKnotGap(TOLERANCE_KM, DEFAULT_STEP_SECONDS,
-                                        DEFAULT_KNOT_GAP_SECONDS, c))
-                                .toList()),
-                new Sweep("tolerance", "4-conjunction-tolerance",
-                        "step=" + DEFAULT_STEP_SECONDS + "s, cell=" + DEFAULT_CELL_KM
-                                + "km, knotGap=" + DEFAULT_KNOT_GAP_SECONDS + "s",
-                        DoubleStream.of(TOLERANCE_VALUES)
-                                .mapToObj(t -> ScanParams.ofKnotGap(t, DEFAULT_STEP_SECONDS,
-                                        DEFAULT_KNOT_GAP_SECONDS, DEFAULT_CELL_KM))
+                                .mapToObj(g -> ScanParams.ofKnotGap(DEFAULT_STEP_SECONDS, g))
                                 .toList()));
     }
 
+    // One run per point since accuracy is deterministic. Every point at a step shares its propagation.
+    private void grid(List<SatelliteScanInfo> satellites, List<EventKey> safeEvents, String docsDir, String axis,
+                      double[] values, GridPoint point) {
+        log.info("");
+        log.info("Sweeping step x {} ({} configs), knotGap={}s", axis,
+                GRID_STEP_SECONDS_VALUES.length * values.length, DEFAULT_KNOT_GAP_SECONDS);
+        BenchmarkCsv csv = new BenchmarkCsv(BenchmarkCsv.Group.PARAMS, BenchmarkCsv.Group.COUNTS,
+                BenchmarkCsv.Group.TIMINGS, BenchmarkCsv.Group.MATCH, BenchmarkCsv.Group.MISS_ERROR);
+        for (double step : GRID_STEP_SECONDS_VALUES) {
+            int stride = PropagationService.knotStride(step, DEFAULT_KNOT_GAP_SECONDS);
+            StopWatch propTimer = StopWatch.createStarted();
+            Map<Integer, TLEPropagator> propagators = propagationService.buildPropagators(satellites);
+            propTimer.stop();
+            StopWatch sgp4Timer = StopWatch.createStarted();
+            PropagationService.KnotCache knots = propagationService.computeKnots(propagators, FIXED_START_TIME,
+                    FIXED_START_TIME.plusHours(LOOKAHEAD_HOURS), step, stride);
+            sgp4Timer.stop();
+            StopWatch interpTimer = StopWatch.createStarted();
+            PropagationService.PositionCache positionCache = propagationService.interpolate(knots);
+            interpTimer.stop();
+
+            for (double value : values) {
+                ScanParams p = point.at(step, stride, value);
+                BenchmarkResult result = runScan(satellites, p, propagators, positionCache,
+                        propTimer.getTime(), sgp4Timer.getTime(), interpTimer.getTime());
+                EventMatcher.MatchStats stats = EventMatcher.match(safeEvents, result.refinedEvents(), TCA_TOLERANCE);
+                csv.addRow(result, stats);
+                log.info("  -> step={}s tol={}km cell={}km | missed={} extra={}", p.stepSeconds(),
+                        String.format(Locale.ROOT, "%.1f", p.toleranceKm()),
+                        String.format(Locale.ROOT, "%.1f", p.cellSizeKm()), stats.safeOnly(), stats.oursOnly());
+            }
+            // Rewritten after every step so a crash keeps what finished.
+            writeString(Paths.get("docs", docsDir, "conjunction_benchmark.csv"), csv.build());
+        }
+    }
+
     private List<EventKey> runBaseline(List<SatelliteScanInfo> satellites) {
-        ScanParams p = new ScanParams(TOLERANCE_KM, BASELINE_STEP_SECONDS,
+        ScanParams p = new ScanParams(BASELINE_TOLERANCE_KM, BASELINE_STEP_SECONDS,
                 BASELINE_STRIDE, BASELINE_CELL_KM);
         log.info("");
         log.info("Baseline: tolerance={}km step={}s stride={} cell={}km (TCA match window {}s)",
-                TOLERANCE_KM, BASELINE_STEP_SECONDS, BASELINE_STRIDE, BASELINE_CELL_KM,
+                BASELINE_TOLERANCE_KM, BASELINE_STEP_SECONDS, BASELINE_STRIDE, BASELINE_CELL_KM,
                 TCA_TOLERANCE.toSeconds());
 
         BenchmarkResult result = runBenchmark(satellites, p);
@@ -145,7 +175,7 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
                 csv.addRow(result, stats);
                 if (i == 0) {
                     log.info("  -> tol={}km step={}s cell={}km knotGap={}s | jaccard={} matched={} oursOnly={} safeOnly={} missErr median={}m p99={}m",
-                            String.format(Locale.ROOT, "%.0f", p.toleranceKm()),
+                            String.format(Locale.ROOT, "%.1f", p.toleranceKm()),
                             String.format(Locale.ROOT, "%.4f", p.stepSeconds()),
                             String.format(Locale.ROOT, "%.1f", p.cellSizeKm()),
                             String.format(Locale.ROOT, "%.0f", p.knotGapSeconds()),
@@ -157,6 +187,10 @@ public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRun
             }
         }
         writeString(s.outputPath(), csv.build());
+    }
+
+    private interface GridPoint {
+        ScanParams at(double stepSeconds, int stride, double value);
     }
 
     private record Sweep(String name, String docsDir, String locked, List<ScanParams> configs) {

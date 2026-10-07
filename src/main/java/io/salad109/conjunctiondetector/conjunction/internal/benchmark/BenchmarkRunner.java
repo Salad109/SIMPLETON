@@ -31,7 +31,7 @@ abstract class BenchmarkRunner {
             .of(2026, 8, 3, 18, 0, 0, 0, ZoneOffset.UTC);
     // Warm up on the deployed config for C2 to settle.
     private static final int WARMUP_ITERATIONS = 3;
-    private static final ScanParams WARMUP_PARAMS = new ScanParams(84.0, 10.8, 32, 76.5);
+    private static final ScanParams WARMUP_PARAMS = ScanParams.of(12, 21);
     private static final Logger log = LoggerFactory.getLogger(BenchmarkRunner.class);
     protected final SatelliteService satelliteService;
     protected final PropagationService propagationService;
@@ -97,7 +97,7 @@ abstract class BenchmarkRunner {
                 + checkPairs.getTime() + grouping.getTime() + refine.getTime() + probability.getTime();
 
         log.info("tol={}km step={}s stride={} cell={}km | {}ms | prop={}ms sgp4={}ms interp={}ms check={}ms group={}ms refine={}ms pc={}ms | {} conj",
-                (int) p.toleranceKm(), String.format(Locale.ROOT, "%.4f", p.stepSeconds()), p.stride(),
+                String.format(Locale.ROOT, "%.1f", p.toleranceKm()), String.format(Locale.ROOT, "%.4f", p.stepSeconds()), p.stride(),
                 String.format(Locale.ROOT, "%.1f", p.cellSizeKm()), totalMs,
                 propagatorTime, sgp4Time, interpTime,
                 checkPairs.getTime(), grouping.getTime(), refine.getTime(),

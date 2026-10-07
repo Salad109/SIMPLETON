@@ -46,7 +46,7 @@ public class SocratesComparisonBenchmark implements CommandLineRunner {
             .of(2026, 5, 9, 19, 0, 0, 0, ZoneOffset.UTC);
     private static final int LOOKAHEAD_HOURS = 168;
     private static final int SUBWINDOW_COUNT = 8;
-    private static final Path OUTPUT_DIR = Paths.get("docs", "8-socrates-comparison");
+    private static final Path OUTPUT_DIR = Paths.get("docs", "7-socrates-comparison");
     private static final double THRESHOLD_KM = 5.0;
     private static final String OUTPUT_NAME = "ours.csv";
 
@@ -55,17 +55,11 @@ public class SocratesComparisonBenchmark implements CommandLineRunner {
     private final ScanService scanService;
     private final CollisionProbabilityService collisionProbabilityService;
 
-    @Value("${conjunction.tolerance-km}")
-    private double toleranceKm;
-
-    @Value("${conjunction.cell-size-km}")
-    private double cellSizeKm;
-
     @Value("${conjunction.step-seconds}")
     private double stepSeconds;
 
-    @Value("${conjunction.interpolation-stride}")
-    private int interpolationStride;
+    @Value("${conjunction.knot-gap-seconds}")
+    private double knotGapSeconds;
 
     public SocratesComparisonBenchmark(SatelliteService satelliteService,
                                        PropagationService propagationService,
@@ -80,12 +74,14 @@ public class SocratesComparisonBenchmark implements CommandLineRunner {
     @Override
     public void run(String @NonNull ... args) {
         OffsetDateTime windowEnd = START_TIME.plusHours(LOOKAHEAD_HOURS);
+        double toleranceKm = ScanService.coarseToleranceKm(stepSeconds, THRESHOLD_KM);
+        int interpolationStride = PropagationService.knotStride(stepSeconds, knotGapSeconds);
 
         log.info("");
         log.info("SOCRATES comparison run");
         log.info("Window: {} -> {} ({} h, {} subwindows)", START_TIME, windowEnd, LOOKAHEAD_HOURS, SUBWINDOW_COUNT);
-        log.info("Tolerance: {} km, cell: {} km, threshold: {} km, step: {} s, stride: {}",
-                toleranceKm, cellSizeKm, THRESHOLD_KM, stepSeconds, interpolationStride);
+        log.info("Tolerance and cell: {} km, threshold: {} km, step: {} s, stride: {}",
+                toleranceKm, THRESHOLD_KM, stepSeconds, interpolationStride);
         log.info("");
 
         StopWatch total = StopWatch.createStarted();
@@ -108,7 +104,7 @@ public class SocratesComparisonBenchmark implements CommandLineRunner {
                     propagators, subStart, subEnd, stepSeconds, interpolationStride);
             PropagationService.PositionCache cache = propagationService.interpolate(knots);
             List<ScanService.CoarseDetection> detections = scanService.checkPairs(
-                    satellites, cache, toleranceKm, cellSizeKm);
+                    satellites, cache, toleranceKm, toleranceKm);
             List<ScanService.CoarseDetection> events = scanService.groupAndReduce(detections);
             List<ScanService.RefinedEvent> refined = scanService.refine(
                     events, cache, propagators, stepSeconds, THRESHOLD_KM);

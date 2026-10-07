@@ -51,7 +51,8 @@
     let orbitB = PRESETS[0].orbitB;
     let phases = {mAOffset: 0, mBOffset: 0};
 
-    const DEFAULTS = {tolerance: 84, cellSize: 76.5, stepSeconds: 10.8, stride: 32};
+    const DEFAULTS = {stepSeconds: 12, knotGap: 252};
+    const MAX_CLOSING_SPEED_KM_S = 15.6;
 
     const HALF_NEIGHBORS_2D = [
         {dx: 1, dy: 0},
@@ -79,6 +80,13 @@
         showRefine: true,
         showTruth: true
     };
+
+    function syncTolerance() {
+        const halfStepKm = MAX_CLOSING_SPEED_KM_S * state.stepSeconds / 2;
+        state.tolerance = Math.sqrt(COLLISION_THRESHOLD_KM ** 2 + halfStepKm ** 2);
+        state.cellSize = state.tolerance;
+        document.getElementById('tolerance-val').textContent = state.tolerance.toFixed(1);
+    }
 
     function solveKepler(M, e) {
         let E = M;
@@ -195,11 +203,16 @@
     // Like PropagationService, the last knot is pulled back onto the end of the window, so the final
     // interval is short rather than running past it. Every sample stays bracketed by two knots.
     function knotCount() {
-        return Math.max(1, Math.ceil(PERIOD_SECONDS / (state.stride * state.stepSeconds)));
+        return Math.max(1, Math.ceil(PERIOD_SECONDS / (stride() * state.stepSeconds)));
+    }
+
+    // Mirrors PropagationService.knotStride: knots a whole number of steps apart, closest to the requested gap.
+    function stride() {
+        return Math.max(1, Math.round(state.knotGap / state.stepSeconds));
     }
 
     function interpPos(stateFn, t) {
-        const knotDtParam = (state.stride * state.stepSeconds) / PERIOD_SECONDS;
+        const knotDtParam = (stride() * state.stepSeconds) / PERIOD_SECONDS;
         const k = Math.min(Math.floor(t / knotDtParam), knotCount() - 1);
         const t0 = k * knotDtParam;
         const t1 = Math.min(t0 + knotDtParam, 1);
@@ -330,7 +343,7 @@
     }
 
     function drawDots(ctx, w, h, C) {
-        const knotDt = (state.stride * state.stepSeconds) / PERIOD_SECONDS;
+        const knotDt = (stride() * state.stepSeconds) / PERIOD_SECONDS;
         const stepDt = state.stepSeconds / PERIOD_SECONDS;
 
         if (state.showKnots) {
@@ -344,7 +357,7 @@
 
         if (state.showInterp) {
             for (let i = 0; i * stepDt <= 1.0001; i++) {
-                if (i % state.stride === 0) continue;
+                if (i % stride() === 0) continue;
                 const t = i * stepDt;
                 drawSample(ctx, interpPos(stateA, t), w, h, C.blue);
                 drawSample(ctx, interpPos(stateB, t), w, h, C.blue);
@@ -639,10 +652,8 @@
     }
 
     const SLIDERS = [
-        {id: 'tolerance', valId: 'tolerance-val', key: 'tolerance'},
-        {id: 'cell-size', valId: 'cell-size-val', key: 'cellSize'},
         {id: 'step-seconds', valId: 'step-seconds-val', key: 'stepSeconds'},
-        {id: 'stride', valId: 'stride-val', key: 'stride'}
+        {id: 'knot-gap', valId: 'knot-gap-val', key: 'knotGap'}
     ];
 
     const TOGGLES = [
@@ -677,6 +688,7 @@
             el.addEventListener('input', () => {
                 state[s.key] = parseFloat(el.value);
                 valEl.textContent = formatSlider(el);
+                syncTolerance();
                 redraw();
             });
         }
@@ -728,6 +740,7 @@
     function resetDefaults() {
         Object.assign(state, DEFAULTS);
         for (const s of SLIDERS) setSliderUi(s.id, s.valId, state[s.key]);
+        syncTolerance();
         redraw();
     }
 
@@ -740,6 +753,7 @@
     }
 
     function init() {
+        syncTolerance();
         setupControls();
         setTimeUi(state.t);
         const ro = new ResizeObserver(redraw);

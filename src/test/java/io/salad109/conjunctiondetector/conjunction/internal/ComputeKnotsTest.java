@@ -46,7 +46,7 @@ class ComputeKnotsTest {
             "90, 9, 50",      // 11 steps, shorter than one stride
             "117, 9, 50",     // 14 steps, short final interval
             "3690, 9, 50",    // 411 steps, 10-step final interval
-            "21600, 10.8, 32", // 2001 steps, one subwindow of the deployed 24h/4 config, 16-step final interval
+            "21600, 12, 21",  // 1801 steps, one subwindow of the deployed 24h/4 config, 15-step final interval
             // strides against a fixed 401-step window
             "3600, 9, 1",     // no interpolation
             "3600, 9, 7",     // never lands on the last step

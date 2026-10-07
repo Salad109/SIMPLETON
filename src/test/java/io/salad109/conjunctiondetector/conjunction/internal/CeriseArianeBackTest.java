@@ -90,11 +90,10 @@ class CeriseArianeBackTest {
     @Test
     void fullPipelineDetectsMultiplePasses() {
 
-        double toleranceKm = 84.0;
-        double cellSizeKm = 76.5;
-        double stepSeconds = 10.8;
-        int interpolationStride = 32;
+        double stepSeconds = 12;
+        int interpolationStride = 21;
         double thresholdKm = 5.0;
+        double toleranceKm = ScanService.coarseToleranceKm(stepSeconds, thresholdKm);
 
         OffsetDateTime ceriseEpoch = OffsetDateTime.of(1996, 7, 23, 9, 25, 32, 0, ZoneOffset.UTC);
         OffsetDateTime debrisEpoch = OffsetDateTime.of(1996, 7, 23, 8, 15, 33, 0, ZoneOffset.UTC);
@@ -114,7 +113,7 @@ class CeriseArianeBackTest {
 
         // Coarse spatial scan
         List<ScanService.CoarseDetection> detections = scanService.checkPairs(
-                satellites, cache, toleranceKm, cellSizeKm);
+                satellites, cache, toleranceKm, toleranceKm);
 
         assertThat(detections).as("coarse detections").isNotEmpty();
 

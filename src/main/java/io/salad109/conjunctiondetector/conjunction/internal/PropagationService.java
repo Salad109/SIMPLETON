@@ -38,6 +38,13 @@ public class PropagationService {
     }
 
     /**
+     * Knots a whole number of steps apart, as close to the requested gap as the step allows.
+     */
+    public static int knotStride(double stepSeconds, double knotGapSeconds) {
+        return Math.max(1, (int) Math.round(knotGapSeconds / stepSeconds));
+    }
+
+    /**
      * Calculates SGP4 PV coordinates at stride points only. Returns SGP4 knot arrays sized [numSats][numKnots].
      * Position in km, velocity in km/s.
      */

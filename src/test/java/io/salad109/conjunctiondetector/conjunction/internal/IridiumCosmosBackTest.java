@@ -88,11 +88,10 @@ class IridiumCosmosBackTest {
     @Test
     void fullPipelineDetectsCollision() {
 
-        double toleranceKm = 84.0;
-        double cellSizeKm = 76.5;
-        double stepSeconds = 10.8;
-        int interpolationStride = 32;
+        double stepSeconds = 12;
+        int interpolationStride = 21;
         double thresholdKm = 5.0;
+        double toleranceKm = ScanService.coarseToleranceKm(stepSeconds, thresholdKm);
 
         List<SatelliteScanInfo> satellites = List.of(iridium(), cosmos());
         Map<Integer, TLEPropagator> propagators = propagationService.buildPropagators(satellites);
@@ -106,7 +105,7 @@ class IridiumCosmosBackTest {
 
         // Coarse spatial scan
         List<ScanService.CoarseDetection> detections = scanService.checkPairs(
-                satellites, cache, toleranceKm, cellSizeKm);
+                satellites, cache, toleranceKm, toleranceKm);
 
         assertThat(detections).as("coarse detections").isNotEmpty();
 
@@ -153,15 +152,14 @@ class IridiumCosmosBackTest {
     @Test
     void detectsCollisionInTheShortFinalInterval() {
 
-        double toleranceKm = 84.0;
-        double cellSizeKm = 76.5;
-        double stepSeconds = 10.8;
-        int interpolationStride = 32;
+        double stepSeconds = 12;
+        int interpolationStride = 21;
         double thresholdKm = 5.0;
+        double toleranceKm = ScanService.coarseToleranceKm(stepSeconds, thresholdKm);
 
-        // 2001 steps with a stride of 32 put knots at 0, 32, ..., 1984 and 2000,
-        // and the collision falls at step 1992, inside the 16-step final interval.
-        OffsetDateTime startTime = COLLISION_TIME.minus(Duration.ofMillis(21_513_600));
+        // 1801 steps with a stride of 21 put knots at 0, 21, ..., 1785 and 1800,
+        // and the collision falls at step 1792, inside the 15-step final interval.
+        OffsetDateTime startTime = COLLISION_TIME.minus(Duration.ofMillis(21_504_000));
         OffsetDateTime endTime = startTime.plusHours(6);
 
         List<SatelliteScanInfo> satellites = List.of(iridium(), cosmos());
@@ -172,7 +170,7 @@ class IridiumCosmosBackTest {
         PropagationService.PositionCache cache = propagationService.interpolate(knots);
 
         List<ScanService.CoarseDetection> detections = scanService.checkPairs(
-                satellites, cache, toleranceKm, cellSizeKm);
+                satellites, cache, toleranceKm, toleranceKm);
         List<ScanService.CoarseDetection> events = scanService.groupAndReduce(detections);
         List<ScanService.RefinedEvent> refined = scanService.refine(
                 events, cache, propagators, stepSeconds, thresholdKm);

@@ -19,10 +19,24 @@ public class ScanService {
     // Going past 1.3 gives no improvement.
     private static final double GATE_MULTIPLIER = 1.3;
 
+    // Head-on closing speed of two circular low orbits, twice the 7.8 km/s orbital speed.
+    private static final double MAX_CLOSING_SPEED_KM_S = 15.6;
+
     private final PropagationService propagationService;
 
     public ScanService(PropagationService propagationService) {
         this.propagationService = propagationService;
+    }
+
+    /**
+     * Coarse tolerance for a time step. The sampled step nearest a closest approach is at most half a step away from
+     * it. At closest approach the miss vector is perpendicular to the relative velocity, so the miss and the relative
+     * distance traveled in half a step are the legs of a right triangle. A pair closing at MAX_CLOSING_SPEED_KM_S
+     * with a miss at the threshold is therefore at most this far apart at its nearest sampled step.
+     */
+    public static double coarseToleranceKm(double stepSeconds, double thresholdKm) {
+        double halfStepKm = MAX_CLOSING_SPEED_KM_S * stepSeconds / 2;
+        return Math.sqrt(thresholdKm * thresholdKm + halfStepKm * halfStepKm);
     }
 
     /**
