@@ -11,6 +11,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 
 class CheckPairsTest {
 
@@ -28,6 +29,12 @@ class CheckPairsTest {
         OffsetDateTime[] times = new OffsetDateTime[steps];
         for (int i = 0; i < steps; i++) times[i] = t0.plusSeconds(i);
         return new PositionCache(idMap, arrayIdToNoradId, times, x, y, z);
+    }
+
+    @Test
+    void toleranceAtTheDeployedStep() {
+        // sqrt(5^2 + (15.6 * 12 / 2)^2)
+        assertThat(ScanService.coarseToleranceKm(12, 5)).isCloseTo(93.733, offset(0.001));
     }
 
     @Test

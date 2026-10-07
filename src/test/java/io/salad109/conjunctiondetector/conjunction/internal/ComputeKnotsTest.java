@@ -4,6 +4,7 @@ import io.salad109.conjunctiondetector.conjunction.internal.PropagationService.K
 import io.salad109.conjunctiondetector.conjunction.internal.PropagationService.PositionCache;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.orekit.data.DataContext;
@@ -36,6 +37,11 @@ class ComputeKnotsTest {
             DataContext.getDefault().getDataProvidersManager()
                     .addProvider(new DirectoryCrawler(orekitData));
         }
+    }
+
+    @Test
+    void deployedKnotGapIsTwentyOneSteps() {
+        assertThat(PropagationService.knotStride(12, 252)).isEqualTo(21);
     }
 
     @ParameterizedTest(name = "{0} s window, {1} s step, stride {2}")
