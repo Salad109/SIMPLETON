@@ -67,15 +67,15 @@ closest approach are within 1 minute of each other.
 
 ## Physics agreement on matched events
 
-For the 134,472 events both pipelines flag:
+134,472 events both pipelines flag, compared at SOCRATES's published resolution:
 
-|               Quantity | Median |    p95 |
-|-----------------------:|-------:|-------:|
-|               ΔTCA (s) | -0.001 |  0.001 |
-|    Δmiss-distance (km) | 0.0000 | 0.0005 |
-| Δrelative-speed (km/s) |     ~0 | 0.0005 |
+|              Quantity | Identical | Within ±1 |
+|----------------------:|----------:|----------:|
+|             ΔTCA (ms) |     69.9% |     98.3% |
+|    Δmiss-distance (m) |     94.4% |     97.7% |
+| Δrelative-speed (m/s) |     99.9% |    100.0% |
 
-TCA agrees to **1 ms** and miss distance to **0.5 m** at p95.
+**98.3%** of TCAs agree with SOCRATES to within 1 ms, and **97.7%** of miss distances to within 1 m.
 
 ![ΔTCA and Δmiss-distance error distributions](1_errors.png)
 
@@ -95,7 +95,7 @@ Agreement is flat at 99.7%+ across all seven days.
 
 ## The remaining 0.1%
 
-![SOCRATES-only events, by reported miss distance and relative velocity](2_missed_events.png)
+![SOCRATES-only events, by reported miss distance and relative velocity, against the matched population](2_missed_events.png)
 
 **126 SOCRATES only.** 119 close below 325 m/s: slow co-orbiting pairs that survived the 10 m/s filter.
 Between passes such a pair stays inside the 93.7 km tolerance, so its successive approaches form one run of detections

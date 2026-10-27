@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -135,7 +136,8 @@ public class SocratesComparisonBenchmark implements CommandLineRunner {
         for (Conjunction c : conjunctions) {
             sb.append(c.getObject1NoradId()).append(',')
                     .append(c.getObject2NoradId()).append(',')
-                    .append(c.getTca().withOffsetSameInstant(ZoneOffset.UTC).format(tcaFormat)).append(',')
+                    .append(c.getTca().withOffsetSameInstant(ZoneOffset.UTC).plusNanos(500_000)
+                            .truncatedTo(ChronoUnit.MILLIS).format(tcaFormat)).append(',')
                     .append(String.format(Locale.ROOT, "%.6f", c.getMissDistanceKm())).append(',')
                     .append(String.format(Locale.ROOT, "%.6f", c.getRelativeVelocityMS() / 1000.0)).append(',')
                     .append(String.format(Locale.ROOT, "%.6e", c.getCollisionProbability()))

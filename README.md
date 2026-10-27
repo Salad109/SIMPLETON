@@ -11,7 +11,7 @@ in about 20 seconds on consumer hardware.
 
 Validated against [CelesTrak SOCRATES](https://celestrak.org/SOCRATES/): when filtered to equivalent scope
 (payload-vs-catalog, excluding intra-constellation pairs) and given identical TLE input, 99.9% of SOCRATES events are
-also flagged by this pipeline, with TCA agreeing to 1 ms and miss distance to 0.5 m at p95 - see
+also flagged by this pipeline, with 98% of TCAs agreeing to within 1 ms and 98% of miss distances to within 1 m - see
 [Validation](#validation) below for the breakdown. Full all-vs-all screening finds ~58,000 conjunctions per 24h window,
 including secondary pairs that SOCRATES excludes.
 
@@ -88,7 +88,13 @@ SOCRATES. Agreement is flat at 99.7%+ across all seven days.
 
 ![ΔTCA and Δmiss-distance error distributions vs SOCRATES](docs/7-socrates-comparison/1_errors.png)
 
-On matched events, TCA agrees to 1 ms and miss distance to 0.5 m at p95.
+On matched events, 98.3% of TCAs agree with SOCRATES to within 1 ms, and 97.7% of miss distances to within 1 m.
+
+![SOCRATES-only events against the matched population](docs/7-socrates-comparison/2_missed_events.png)
+
+The 126 SOCRATES-only events sit at two edges of the matched population: 119 slow co-orbiting pairs, which this
+pipeline reports once at their closest approach where SOCRATES reports every approach, and 7 that straddle the 5 km
+threshold.
 
 Methodology, TLE replication procedure, and analysis of the remaining 0.1% available
 at [docs/7](docs/7-socrates-comparison).

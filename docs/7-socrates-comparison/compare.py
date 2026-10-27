@@ -9,7 +9,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.ticker import MaxNLocator
 import pandas as pd
 
 HERE = Path(__file__).resolve().parent
@@ -81,8 +80,9 @@ def match_events(soc, ours, tol_sec):
     matched_mask = m["oid"].notna()
     matched = m.loc[matched_mask].copy()
     matched["delta_tca_sec"] = (matched["tca_ours"] - matched["tca_socrates"]).dt.total_seconds()
-    matched["delta_miss_km"] = matched["miss_ours_km"] - matched["miss_socrates_km"]
-    matched["delta_rel_speed_kms"] = matched["rel_speed_ours_kms"] - matched["rel_speed_socrates_kms"]
+    matched["delta_miss_km"] = (matched["miss_ours_km"].round(3) - matched["miss_socrates_km"]).round(3)
+    matched["delta_rel_speed_kms"] = (matched["rel_speed_ours_kms"].round(3)
+                                      - matched["rel_speed_socrates_kms"]).round(3)
     matched = matched[[
         "norad_lo", "norad_hi", "tca_socrates", "tca_ours", "delta_tca_sec",
         "miss_socrates_km", "miss_ours_km", "delta_miss_km",
@@ -113,21 +113,28 @@ def match_events(soc, ours, tol_sec):
 def stats(label, x):
     if x.empty:
         return f"{label}: (empty)"
-    return f"{label}: median={x.median():.4f}  p95={x.abs().quantile(0.95):.4f}"
+    return f"{label}: identical={(x == 0).mean() * 100:.1f}%  within 1={(x.abs() <= 1).mean() * 100:.1f}%"
 
 
 def plot_error_histograms(matched, path):
     if matched.empty:
         return
+    window = 20
+    bins = np.arange(-window - 0.5, window + 1)
+    ticks = np.arange(-window, window + 1, 5)
+    labels = [f"≤{t}" if t == -window else f"≥{t}" if t == window else str(t) for t in ticks]
     specs = [
-        (matched["delta_tca_sec"], "TCA Error (SIMPLETON - SOCRATES)", "ΔTCA (s)"),
-        (matched["delta_miss_km"], "Miss-Distance Error (SIMPLETON - SOCRATES)", "ΔMiss Distance (km)"),
+        (matched["delta_tca_sec"], "TCA Error (SIMPLETON - SOCRATES)", "ΔTCA (ms)"),
+        (matched["delta_miss_km"], "Miss-Distance Error (SIMPLETON - SOCRATES)", "ΔMiss Distance (m)"),
     ]
     fig, axes = plt.subplots(2, 1, figsize=(9, 9))
     for ax, (values, title, xlabel) in zip(axes, specs):
-        lo, hi = values.quantile(0.01), values.quantile(0.99)
-        ax.hist(values.clip(lo, hi), bins=80, color="#2ca02c", edgecolor="black", linewidth=0.3)
+        ax.hist((values * 1000).round().clip(-window, window), bins=bins,
+                color="#2ca02c", edgecolor="black", linewidth=0.3)
         ax.axvline(0, color="black", linewidth=0.8, linestyle="--")
+        ax.set_yscale("log")
+        ax.set_ylim(bottom=1)
+        ax.set_xticks(ticks, labels)
         ax.set_xlabel(xlabel, fontsize=12)
         ax.set_ylabel("Matched Events", fontsize=12)
         ax.set_title(title, fontsize=14, fontweight="bold")
@@ -212,31 +219,24 @@ def time_bucket_overlap(soc, ours, window_start, bucket_hours, n_buckets):
     return df
 
 
-def plot_missed_events(missed, path):
+def plot_missed_events(missed, matched, path):
     if missed.empty:
         return
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 5))
-
-    ax1.hist(missed["miss_distance_km"], bins=50, range=(0, 5),
-             color="#D62839", edgecolor="black", linewidth=0.3)
-    ax1.set_xlabel("SOCRATES Miss Distance (km)", fontsize=12)
-    ax1.set_ylabel("Events", fontsize=12)
-    ax1.set_title("By Reported Miss Distance", fontsize=12, fontweight="bold")
-    ax1.set_xlim(0, 5)
-    ax1.yaxis.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 5, 10]))
-    ax1.grid(True, alpha=0.3)
-
-    vel_hi = max(15.0, float(missed["relative_speed_km_s"].max()))
-    ax2.hist(missed["relative_speed_km_s"], bins=50, range=(0, vel_hi),
-             color="#2A6F97", edgecolor="black", linewidth=0.3)
-    ax2.set_xlabel("SOCRATES Relative Velocity (km/s)", fontsize=12)
-    ax2.set_ylabel("Events", fontsize=12)
-    ax2.set_title("By Reported Relative Velocity", fontsize=12, fontweight="bold")
-    ax2.set_xlim(0, vel_hi)
-    ax2.yaxis.set_major_locator(MaxNLocator(integer=True, steps=[1, 2, 5, 10]))
-    ax2.grid(True, alpha=0.3)
-
-    fig.suptitle("SOCRATES-Only Events", fontsize=14, fontweight="bold")
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.scatter(matched["rel_speed_socrates_kms"], matched["miss_socrates_km"],
+               s=1.5, color="black", alpha=0.25, linewidths=0, rasterized=True,
+               label=f"Matched (n={len(matched):,})")
+    ax.scatter(missed["relative_speed_km_s"], missed["miss_distance_km"],
+               s=22, color="#d4a34a", edgecolor="black", linewidth=0.4, zorder=3,
+               label=f"SOCRATES-only (n={len(missed)})")
+    ax.axhline(5, color="black", linewidth=0.8, linestyle="--")
+    ax.set_xlabel("SOCRATES Relative Velocity (km/s)", fontsize=12)
+    ax.set_ylabel("SOCRATES Miss Distance (km)", fontsize=12)
+    ax.set_title("SOCRATES-Only Events Against the Matched Population", fontsize=14, fontweight="bold")
+    ax.set_ylim(0, 5.1)
+    legend = ax.legend(loc="lower left", bbox_to_anchor=(0.06, 0.01))
+    legend.legend_handles[0].set_alpha(1)
+    legend.legend_handles[0].set_sizes([10])
     fig.tight_layout()
     fig.savefig(path, dpi=300, bbox_inches="tight")
     plt.close(fig)
@@ -258,13 +258,13 @@ def main():
     print(f"\nPer-day overlap")
     time_bucket_overlap(soc, ours, WINDOW_START, 24, WINDOW_HOURS // 24)
 
-    plot_missed_events(soc_un, HERE / "2_missed_events.png")
+    plot_missed_events(soc_un, matched, HERE / "2_missed_events.png")
 
     if not matched.empty:
         print(f"\nErrors on matched events")
-        print(f"  {stats('  dTCA (s)         ', matched['delta_tca_sec'])}")
-        print(f"  {stats('  d miss-dist (km) ', matched['delta_miss_km'])}")
-        print(f"  {stats('  d rel-speed(km/s)', matched['delta_rel_speed_kms'])}")
+        print(f"  {stats('  dTCA (ms)        ', (matched['delta_tca_sec'] * 1000).round())}")
+        print(f"  {stats('  d miss-dist (m)  ', (matched['delta_miss_km'] * 1000).round())}")
+        print(f"  {stats('  d rel-speed (m/s)', (matched['delta_rel_speed_kms'] * 1000).round())}")
         plot_error_histograms(matched, HERE / "1_errors.png")
 
 
