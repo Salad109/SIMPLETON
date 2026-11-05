@@ -34,9 +34,10 @@ public class CollisionProbabilityService {
     // fitted to their two forward bins (2-3 d and 6-7 d, at midpoints 2.5 and 6.5).
     private static final double RADIAL_BASE_M = 248.4;
     private static final double INTRACK_BASE_M = 1187.8;
-    private static final double CROSSTRACK_BASE_M = 164.0;
+    private static final double CROSSTRACK_BASE_M = 163.4;
     private static final double RADIAL_GROWTH_M_PER_DAY = 114.3;
     private static final double INTRACK_GROWTH_M_PER_DAY = 316.5;
+    private static final double CROSSTRACK_GROWTH_M_PER_DAY = 0.25;
 
     // Faster than numerical integration and more accurate than existing analytical methods. Serra et al. (2016)
     private final ShortTermEncounter2DPOCMethod pocMethod = new Laas2015();
@@ -83,7 +84,7 @@ public class CollisionProbabilityService {
     private StateCovariance buildCovariance(double tleAgeDays, RefinedEvent event) {
         double sigR = RADIAL_BASE_M + RADIAL_GROWTH_M_PER_DAY * tleAgeDays;
         double sigT = INTRACK_BASE_M + INTRACK_GROWTH_M_PER_DAY * tleAgeDays;
-        double sigW = CROSSTRACK_BASE_M; // flat across both forward bins of Aida Table 1
+        double sigW = CROSSTRACK_BASE_M + CROSSTRACK_GROWTH_M_PER_DAY * tleAgeDays;
 
         RealMatrix cov = new Array2DRowRealMatrix(6, 6);
         cov.setEntry(0, 0, sigR * sigR);
