@@ -5,11 +5,10 @@ import io.salad109.conjunctiondetector.satellite.Satellite;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
 import io.salad109.conjunctiondetector.spacetrack.GpRecord;
 import io.salad109.conjunctiondetector.spacetrack.SpaceTrackClient;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class IngestionService {
-
-    private static final Logger log = LoggerFactory.getLogger(IngestionService.class);
 
     private final SpaceTrackClient spaceTrackClient;
     private final SatelliteService satelliteService;

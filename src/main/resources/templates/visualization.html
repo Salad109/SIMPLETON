@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head('Conjunction #' + ${visualization.id})}"></head>
-<script type="importmap">
-    {"imports":{"three":"/vendor/three/three.module.js","three/addons/":"/vendor/three/addons/"}}
-</script>
-<script src="/vendor/satellite.min.js"></script>
-</head>
 <body>
 
 <nav th:replace="~{fragments/nav :: nav('')}"></nav>
@@ -122,6 +117,10 @@
     };
 </script>
 
+<script type="importmap">
+    {"imports":{"three":"/vendor/three/three.module.js","three/addons/":"/vendor/three/addons/"}}
+</script>
+<script src="/vendor/satellite.min.js"></script>
 <script type="module">
     import * as THREE from 'three';
     import {OrbitControls} from 'three/addons/controls/OrbitControls.js';

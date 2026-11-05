@@ -6,10 +6,9 @@ import io.salad109.conjunctiondetector.conjunction.internal.PropagationService;
 import io.salad109.conjunctiondetector.conjunction.internal.ScanService;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -17,11 +16,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+@Slf4j
 abstract class BenchmarkRunner {
 
     protected static final int LOOKAHEAD_HOURS = 24;
@@ -32,7 +31,6 @@ abstract class BenchmarkRunner {
     // Warm up on the deployed config for C2 to settle.
     private static final int WARMUP_ITERATIONS = 3;
     private static final ScanParams WARMUP_PARAMS = ScanParams.of(12, 21);
-    private static final Logger log = LoggerFactory.getLogger(BenchmarkRunner.class);
     protected final SatelliteService satelliteService;
     protected final PropagationService propagationService;
     protected final ScanService scanService;
@@ -112,16 +110,9 @@ abstract class BenchmarkRunner {
 
     protected void warmup(List<SatelliteScanInfo> satellites) {
         log.info("JIT warmup: {} discarded runs", WARMUP_ITERATIONS);
-        runIterations(satellites, WARMUP_PARAMS, WARMUP_ITERATIONS);
-    }
-
-    protected List<BenchmarkResult> runIterations(List<SatelliteScanInfo> satellites,
-                                                  ScanParams p, int iterations) {
-        List<BenchmarkResult> results = new ArrayList<>();
-        for (int i = 0; i < iterations; i++) {
-            results.add(runBenchmark(satellites, p));
+        for (int i = 0; i < WARMUP_ITERATIONS; i++) {
+            runBenchmark(satellites, WARMUP_PARAMS);
         }
-        return results;
     }
 
     protected void writeString(Path outputPath, String content) {

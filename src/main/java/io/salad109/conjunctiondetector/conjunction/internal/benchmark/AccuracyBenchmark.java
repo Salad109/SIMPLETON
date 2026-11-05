@@ -5,11 +5,10 @@ import io.salad109.conjunctiondetector.conjunction.internal.PropagationService;
 import io.salad109.conjunctiondetector.conjunction.internal.ScanService;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jspecify.annotations.NonNull;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -28,11 +27,10 @@ import java.util.stream.DoubleStream;
  * Windows:
  * ./mvnw spring-boot:run "-Dspring-boot.run.profiles=benchmark-accuracy" "-Dspring-boot.run.jvmArguments=-Xmx20g -Xms20g -XX:+AlwaysPreTouch -Dconjunction.schedule.cron=-"
  */
+@Slf4j
 @Component
 @Profile("benchmark-accuracy")
 public class AccuracyBenchmark extends BenchmarkRunner implements CommandLineRunner {
-
-    private static final Logger log = LoggerFactory.getLogger(AccuracyBenchmark.class);
 
     private static final int ITERATIONS = 5;
 

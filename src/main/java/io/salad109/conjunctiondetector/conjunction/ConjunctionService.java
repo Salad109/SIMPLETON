@@ -5,10 +5,9 @@ import io.salad109.conjunctiondetector.conjunction.internal.*;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -25,10 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class ConjunctionService {
-
-    private static final Logger log = LoggerFactory.getLogger(ConjunctionService.class);
 
     private final SatelliteService satelliteService;
     private final ConjunctionRepository conjunctionRepository;

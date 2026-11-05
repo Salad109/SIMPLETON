@@ -1,7 +1,6 @@
 package io.salad109.conjunctiondetector.spacetrack;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
@@ -13,13 +12,13 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+@Slf4j
 @Service
 public class SpaceTrackClient {
 
     private static final String SPACE_TRACK_LOGIN_URL = "/ajaxauth/login";
     // DECAY_DATE/null-val keeps only active (non-decayed) objects; EPOCH/>now-10 keeps only recently updated
     private static final String SPACE_TRACK_QUERY_URL = "/basicspacedata/query/class/gp/DECAY_DATE/null-val/EPOCH/>now-10/orderby/NORAD_CAT_ID/format/json";
-    private static final Logger log = LoggerFactory.getLogger(SpaceTrackClient.class);
     private final RestClient restClient;
     @Value("${spacetrack.username}")
     private String username;

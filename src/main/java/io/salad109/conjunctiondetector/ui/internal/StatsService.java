@@ -8,8 +8,7 @@ import io.salad109.conjunctiondetector.ingestion.IngestionLogService;
 import io.salad109.conjunctiondetector.ingestion.SyncResult;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
 import io.salad109.conjunctiondetector.satellite.SatelliteService.CatalogBreakdown;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -17,10 +16,9 @@ import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class StatsService {
-
-    private static final Logger log = LoggerFactory.getLogger(StatsService.class);
 
     private final SatelliteService satelliteService;
     private final ConjunctionService conjunctionService;

@@ -1,6 +1,7 @@
 package io.salad109.conjunctiondetector.conjunction.internal;
 
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntIntHashMap;
 import org.orekit.frames.Frame;
@@ -9,8 +10,6 @@ import org.orekit.propagation.analytical.tle.TLEPropagator;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScalesFactory;
 import org.orekit.utils.PVCoordinates;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
@@ -21,10 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
+@Slf4j
 @Service
 public class PropagationService {
-
-    private static final Logger log = LoggerFactory.getLogger(PropagationService.class);
 
     public Map<Integer, TLEPropagator> buildPropagators(List<SatelliteScanInfo> satellites) {
         Map<Integer, TLEPropagator> propagators = new HashMap<>();

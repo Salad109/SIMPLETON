@@ -2,6 +2,7 @@ package io.salad109.conjunctiondetector.conjunction.internal;
 
 import io.salad109.conjunctiondetector.conjunction.internal.ScanService.RefinedEvent;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
+import lombok.extern.slf4j.Slf4j;
 import org.hipparchus.linear.Array2DRowRealMatrix;
 import org.hipparchus.linear.RealMatrix;
 import org.orekit.frames.LOFType;
@@ -11,17 +12,14 @@ import org.orekit.propagation.StateCovariance;
 import org.orekit.ssa.collision.shorttermencounter.probability.twod.Laas2015;
 import org.orekit.ssa.collision.shorttermencounter.probability.twod.ShortTermEncounter2DPOCMethod;
 import org.orekit.ssa.metrics.ProbabilityOfCollision;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
 
+@Slf4j
 @Service
 public class CollisionProbabilityService {
-
-    private static final Logger log = LoggerFactory.getLogger(CollisionProbabilityService.class);
 
     private static final double MU = 398600.4418e9; // m^3/s^2
 

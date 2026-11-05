@@ -6,11 +6,10 @@ import io.salad109.conjunctiondetector.conjunction.internal.PropagationService;
 import io.salad109.conjunctiondetector.conjunction.internal.ScanService;
 import io.salad109.conjunctiondetector.satellite.SatelliteScanInfo;
 import io.salad109.conjunctiondetector.satellite.SatelliteService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jspecify.annotations.NonNull;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
@@ -37,11 +36,10 @@ import java.util.Map;
  * Windows:
  * ./mvnw spring-boot:run "-Dspring-boot.run.profiles=benchmark-socrates" "-Dspring-boot.run.jvmArguments=-Xmx16g -Xms16g -XX:+AlwaysPreTouch -Dconjunction.schedule.cron=-"
  */
+@Slf4j
 @Component
 @Profile("benchmark-socrates")
 public class SocratesComparisonBenchmark implements CommandLineRunner {
-
-    private static final Logger log = LoggerFactory.getLogger(SocratesComparisonBenchmark.class);
 
     private static final OffsetDateTime START_TIME = OffsetDateTime
             .of(2026, 5, 9, 19, 0, 0, 0, ZoneOffset.UTC);
